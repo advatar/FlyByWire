@@ -232,7 +232,13 @@ final class FlyWorldSceneController {
         }
 
         applyProboscis(rig: rig, feedDrive: motion.feedDrive, phase: phase)
-        applyWingMotion(rig: rig, behavior: motion.behavior, escapeDrive: motion.escapeDrive, phase: phase)
+        applyWingMotion(
+            rig: rig,
+            behavior: motion.behavior,
+            escapeDrive: motion.escapeDrive,
+            strideDrive: (motion.leftStrideDrive + motion.rightStrideDrive) * 0.5,
+            phase: phase
+        )
         applyBrainHalo(rig: rig, brainDrive: motion.brainDrive, behavior: motion.behavior, phase: phase)
     }
 
@@ -256,16 +262,23 @@ final class FlyWorldSceneController {
         )
     }
 
-    private func applyWingMotion(rig: FlyWorldBuild, behavior: String, escapeDrive: Float, phase: Float) {
-        let flapDrive: Float
-        switch behavior {
-        case "escape":
-            flapDrive = max(escapeDrive, 0.58)
-        default:
-            flapDrive = 0.0
-        }
-
-        let flap = flapDrive * sin(phase * 11.0)
+    private func applyWingMotion(
+        rig: FlyWorldBuild,
+        behavior: String,
+        escapeDrive: Float,
+        strideDrive: Float,
+        phase: Float
+    ) {
+        let flapDrive = FlyWorldPresentationTuning.wingFlapDrive(
+            behavior: behavior,
+            escapeDrive: escapeDrive,
+            strideDrive: strideDrive
+        )
+        let flapFrequency = FlyWorldPresentationTuning.wingFlapFrequency(
+            behavior: behavior,
+            strideDrive: strideDrive
+        )
+        let flap = flapDrive * sin(phase * flapFrequency)
         rig.leftWing.orientation =
             rig.leftWingBaseOrientation
             * simd_quatf(angle: flap * 0.35, axis: SIMD3<Float>(0.0, 0.0, 1.0))
@@ -502,8 +515,8 @@ final class FlyWorldSceneController {
                 "RFTibia": 0.24
             ],
             brainState: [
-                "DNa01": 0.18,
-                "DNa02": 0.12,
+                "DNa01": 0.14,
+                "DNa02": 0.13,
                 "oDN1": 0.46,
                 "aDN1": 0.0,
                 "MN9": 0.0,
@@ -599,9 +612,7 @@ private enum FlyWorldEntityFactory {
         flyRoot.name = "WholeFly"
         flyRoot.position = SIMD3<Float>(0.0, FlyWorldLegKinematics.flyRootVerticalBiasScene, 0.0)
         flyRoot.scale = SIMD3<Float>(repeating: FlyWorldLegKinematics.flyGeometryScale)
-        flyRoot.orientation =
-            simd_quatf(angle: -Float.pi / 7.0, axis: SIMD3<Float>(0.0, 1.0, 0.0)) *
-            simd_quatf(angle: Float.pi / 22.0, axis: SIMD3<Float>(0.0, 0.0, 1.0))
+        flyRoot.orientation = FlyWorldPresentationTuning.bodyBaseOrientation
 
         sceneRoot.addChild(poseAnchor)
         poseAnchor.addChild(flyRoot)

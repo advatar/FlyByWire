@@ -78,6 +78,26 @@ final class FlyWorldBrainDrivenMotionTests: XCTestCase {
         XCTAssertGreaterThan(advanced.rootPositionMm.x, initial.rootPositionMm.x + 0.12)
         XCTAssertGreaterThan(advanced.leftStrideDrive, 0.6)
         XCTAssertGreaterThan(advanced.rightStrideDrive, 0.6)
+
+        let walkWingDrive = FlyWorldPresentationTuning.wingFlapDrive(
+            behavior: advanced.behavior,
+            escapeDrive: advanced.escapeDrive,
+            strideDrive: (advanced.leftStrideDrive + advanced.rightStrideDrive) * 0.5
+        )
+        let idleWingDrive = FlyWorldPresentationTuning.wingFlapDrive(
+            behavior: "idle",
+            escapeDrive: 0.0,
+            strideDrive: 0.7
+        )
+        let escapeWingDrive = FlyWorldPresentationTuning.wingFlapDrive(
+            behavior: "escape",
+            escapeDrive: 0.84,
+            strideDrive: 0.7
+        )
+
+        XCTAssertGreaterThan(walkWingDrive, 0.15)
+        XCTAssertEqual(idleWingDrive, 0.0, accuracy: 0.0001)
+        XCTAssertGreaterThan(escapeWingDrive, walkWingDrive)
     }
 
     func testClosedLoopLocomotionKeepsSupportLegsOnFloor() {
@@ -147,9 +167,14 @@ final class FlyWorldBrainDrivenMotionTests: XCTestCase {
     func testDefaultFlyScaleLeavesArenaMargin() {
         let bodyHalfLengthScene = 0.51 * FlyWorldLegKinematics.flyGeometryScale
         let bodyHalfWidthScene = 0.27 * FlyWorldLegKinematics.flyGeometryScale
+        let renderedForward = FlyWorldPresentationTuning.bodyBaseOrientation.act(
+            SIMD3<Float>(-1.0, 0.0, 0.0)
+        )
 
         XCTAssertLessThan(bodyHalfLengthScene, FlyWorldLegKinematics.arenaRadiusScene * 0.72)
         XCTAssertLessThan(bodyHalfWidthScene, FlyWorldLegKinematics.arenaRadiusScene * 0.55)
+        XCTAssertGreaterThan(renderedForward.x, 0.85)
+        XCTAssertLessThan(abs(renderedForward.z), 0.45)
     }
 
     func testIdleBrainDrivenMotionDoesNotDrift() {

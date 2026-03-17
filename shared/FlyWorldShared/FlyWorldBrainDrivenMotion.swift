@@ -63,6 +63,50 @@ enum FlyWorldBehaviorResolver {
     }
 }
 
+enum FlyWorldPresentationTuning {
+    static let bodyBaseOrientation =
+        simd_quatf(angle: Float.pi, axis: SIMD3<Float>(0.0, 1.0, 0.0)) *
+        simd_quatf(angle: -Float.pi / 7.0, axis: SIMD3<Float>(0.0, 1.0, 0.0)) *
+        simd_quatf(angle: Float.pi / 22.0, axis: SIMD3<Float>(0.0, 0.0, 1.0))
+
+    static func wingFlapDrive(
+        behavior: String,
+        escapeDrive: Float,
+        strideDrive: Float
+    ) -> Float {
+        let clampedStride = clamp(strideDrive, min: 0.0, max: 1.0)
+
+        switch behavior {
+        case "escape":
+            return max(escapeDrive, 0.58)
+        case "walk":
+            return 0.06 + clampedStride * 0.15
+        case "feed":
+            return 0.03 + clampedStride * 0.08
+        default:
+            return 0.0
+        }
+    }
+
+    static func wingFlapFrequency(
+        behavior: String,
+        strideDrive: Float
+    ) -> Float {
+        let clampedStride = clamp(strideDrive, min: 0.0, max: 1.0)
+
+        switch behavior {
+        case "escape":
+            return 11.0
+        case "walk":
+            return 5.8 + clampedStride * 1.8
+        case "feed":
+            return 4.2 + clampedStride * 1.2
+        default:
+            return 0.0
+        }
+    }
+}
+
 enum FlyWorldLegID: CaseIterable, Hashable {
     case leftFront
     case rightFront

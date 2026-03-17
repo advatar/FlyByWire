@@ -13,3 +13,5 @@
 - [x] Add tests and viewer copy updates for closed-loop locomotion behavior.
 - [x] Reduce the default fly geometry scale so it fits the arena with more margin.
 - [x] Add a scale-fit test and refresh viewer copy if needed.
+- [x] Align fallback fly heading and sample turn bias so default walking reads as forward locomotion.
+- [x] Restore visible non-escape wing animation and add regression coverage for walk presentation.
