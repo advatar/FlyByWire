@@ -26,7 +26,7 @@ xcodebuild -project FlyBrainWorldVision.xcodeproj \
 
 ## Movement
 
-If no live packet exists in the app Documents directory, the fly runs a built-in demo walk and periodically leans into the nectar dish.
+If no live packet exists in the app Documents directory, the viewer falls back to a shared descending-controller path that drives locomotion and feeding from the packet's brain-state channels.
 
 To drive motion from the simulator bridge instead, keep updating one of these files:
 

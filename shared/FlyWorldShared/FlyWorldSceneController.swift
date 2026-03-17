@@ -53,6 +53,11 @@ struct FlyWorldSceneMetadata {
     }
 }
 
+private enum FlyWorldMotionMode {
+    case directPose
+    case brainDrivenFallback
+}
+
 @MainActor
 @Observable
 final class FlyWorldSceneController {
@@ -66,7 +71,8 @@ final class FlyWorldSceneController {
     private var latestPoseSource: FlyWorldPosePacketSource?
     private var lastPacketSignature: String?
     private var isLoaded = false
-    private var usesLivePoseStream = false
+    private var motionMode: FlyWorldMotionMode = .brainDrivenFallback
+    private var brainMotionController = FlyWorldBrainDrivenMotionController()
 
     private let floorY: Float = -0.34
     private let millimeterScale: Float = 0.12
@@ -153,126 +159,82 @@ final class FlyWorldSceneController {
     }
 
     private func apply(packet: FlyWorldPosePacket, source: FlyWorldPosePacketSource?) {
+        let renderTime = Date().timeIntervalSince1970
         guard let rig else { return }
 
         latestPacket = packet
         latestPoseSource = source
-        usesLivePoseStream = source?.label == "Documents pose packet"
-        if usesLivePoseStream {
-            applyRootTransform(packet: packet, rig: rig)
-        } else {
-            applyDemoRootTransform(referencePacket: packet, time: packet.timestamp, rig: rig)
+        motionMode = source?.label == "Documents pose packet" ? .directPose : .brainDrivenFallback
+        if motionMode == .brainDrivenFallback {
+            brainMotionController.reset(using: packet, referenceTime: renderTime)
         }
-        applyBehaviorState(packet: packet, phase: Float(packet.timestamp), rig: rig)
+
+        let motion = resolveMotionFrame(packet: packet, time: renderTime)
+        applyRootTransform(motion: motion, rig: rig)
+        applyBehaviorState(packet: packet, motion: motion, rig: rig)
         updateWorldObjects(from: packet.worldObjectsOrDefault)
-        refreshMetadata(packet: packet, source: source)
+        refreshMetadata(packet: packet, source: source, behavior: motion.behavior)
     }
 
     private func animate(at time: TimeInterval) {
         guard let rig, let packet = latestPacket else { return }
-        if usesLivePoseStream {
-            applyRootTransform(packet: packet, rig: rig)
-        } else {
-            applyDemoRootTransform(referencePacket: packet, time: time, rig: rig)
-        }
-        applyBehaviorState(packet: packet, phase: Float(time), rig: rig)
+        let motion = resolveMotionFrame(packet: packet, time: time)
+        applyRootTransform(motion: motion, rig: rig)
+        applyBehaviorState(packet: packet, motion: motion, rig: rig)
         refreshPacketAge(referenceDate: Date(timeIntervalSince1970: time))
     }
 
-    private func applyRootTransform(packet: FlyWorldPosePacket, rig: FlyWorldBuild) {
-        let simulationPosition = packet.rootPositionVector
+    private func resolveMotionFrame(
+        packet: FlyWorldPosePacket,
+        time: TimeInterval
+    ) -> FlyWorldMotionFrame {
+        switch motionMode {
+        case .directPose:
+            return FlyWorldMotionFrame.directPose(packet: packet, time: time)
+        case .brainDrivenFallback:
+            return brainMotionController.synthesize(packet: packet, time: time)
+        }
+    }
+
+    private func applyRootTransform(motion: FlyWorldMotionFrame, rig: FlyWorldBuild) {
+        let simulationPosition = motion.rootPositionMm
         rig.poseAnchor.position = SIMD3<Float>(
             simulationPosition.x * millimeterScale,
             simulationPosition.z * millimeterScale,
             -simulationPosition.y * millimeterScale
         )
 
-        let packetOrientation = packet.rootQuaternion
+        let packetOrientation = motion.rootQuaternion
         rig.poseAnchor.orientation =
             simulationToSceneRotation * packetOrientation * simulationToSceneRotation.inverse
     }
 
-    private func applyDemoRootTransform(
-        referencePacket packet: FlyWorldPosePacket,
-        time: TimeInterval,
-        rig: FlyWorldBuild
-    ) {
-        let motion = demoMotion(at: Float(time), baseHeight: packet.rootPositionVector.z)
-        rig.poseAnchor.position = SIMD3<Float>(
-            motion.position.x * millimeterScale,
-            motion.position.z * millimeterScale,
-            -motion.position.y * millimeterScale
-        )
-        rig.poseAnchor.orientation = motion.orientation
-    }
-
-    private func demoMotion(at time: Float, baseHeight: Float) -> (position: SIMD3<Float>, orientation: simd_quatf) {
-        let angularSpeed: Float = 0.34
-        let theta = time * angularSpeed
-        let x = sin(theta) * 2.7 + sin(theta * 0.5) * 0.8
-        let y = sin(theta * 0.5) * 1.8
-        let dx = cos(theta) * 2.7 * angularSpeed + cos(theta * 0.5) * 0.4 * angularSpeed
-        let dy = cos(theta * 0.5) * 0.9 * angularSpeed
-        let sceneDirection = simd_normalize(SIMD3<Float>(dx, 0.0, -dy))
-        let heading = atan2(sceneDirection.x, sceneDirection.z)
-        return (
-            SIMD3<Float>(x, y, baseHeight),
-            simd_quatf(angle: heading, axis: SIMD3<Float>(0.0, 1.0, 0.0))
-        )
-    }
-
     private func applyBehaviorState(
         packet: FlyWorldPosePacket,
-        phase: Float,
+        motion: FlyWorldMotionFrame,
         rig: FlyWorldBuild
     ) {
-        let demoFeed = demoFeedDrive(at: phase)
-        let behavior = resolvedBehavior(packet: packet, demoFeed: demoFeed)
-        let walkDrive: Float
-        switch behavior {
-        case "escape":
-            walkDrive = 0.28
-        case "walk":
-            walkDrive = 0.18
-        default:
-            walkDrive = 0.04
-        }
-
-        let feedDrive = max(packet.brainState["MN9"] ?? 0.0, demoFeed, behavior == "feed" ? 1.0 : 0.0)
-        let escapeDrive = max(packet.brainState["loom_escape"] ?? 0.0, behavior == "escape" ? 1.0 : 0.0)
-        let brainDrive = max(packet.brainState.values.max() ?? 0.0, walkDrive)
+        let phase = motion.gaitPhase
 
         applyLeg(
             rig.leftFrontLeg,
             packet: packet,
             prefix: "LF",
-            gaitPhase: phase * 5.2,
-            walkDrive: walkDrive
+            gaitPhase: phase,
+            strideDrive: motion.leftStrideDrive,
+            behavior: motion.behavior
         )
         applyLeg(
             rig.rightFrontLeg,
             packet: packet,
             prefix: "RF",
-            gaitPhase: phase * 5.2 + .pi,
-            walkDrive: walkDrive
+            gaitPhase: phase + .pi,
+            strideDrive: motion.rightStrideDrive,
+            behavior: motion.behavior
         )
-        applyProboscis(rig: rig, feedDrive: feedDrive, phase: phase)
-        applyWingMotion(rig: rig, escapeDrive: escapeDrive, phase: phase)
-        applyBrainHalo(rig: rig, brainDrive: brainDrive, behavior: behavior, phase: phase)
-    }
-
-    private func demoFeedDrive(at phase: Float) -> Float {
-        guard !usesLivePoseStream else { return 0.0 }
-        let cycle = phase.truncatingRemainder(dividingBy: 18.0)
-        guard cycle > 10.6 && cycle < 13.8 else { return 0.0 }
-        let centered = abs(cycle - 12.2) / 1.6
-        return max(0.0, 1.0 - centered)
-    }
-
-    private func resolvedBehavior(packet: FlyWorldPosePacket, demoFeed: Float) -> String {
-        let baseBehavior = packet.behavior.lowercased()
-        guard !usesLivePoseStream, demoFeed > 0.22 else { return baseBehavior }
-        return "feed"
+        applyProboscis(rig: rig, feedDrive: motion.feedDrive, phase: phase)
+        applyWingMotion(rig: rig, escapeDrive: motion.escapeDrive, phase: phase)
+        applyBrainHalo(rig: rig, brainDrive: motion.brainDrive, behavior: motion.behavior, phase: phase)
     }
 
     private func applyLeg(
@@ -280,11 +242,47 @@ final class FlyWorldSceneController {
         packet: FlyWorldPosePacket,
         prefix: String,
         gaitPhase: Float,
-        walkDrive: Float
+        strideDrive: Float,
+        behavior: String
     ) {
-        let coxa = (packet.jointAnglesRad["\(prefix)Coxa"] ?? 0.0) + sin(gaitPhase) * walkDrive * 0.6
-        let femur = (packet.jointAnglesRad["\(prefix)Femur"] ?? 0.0) + cos(gaitPhase) * walkDrive * 0.55
-        let tibia = (packet.jointAnglesRad["\(prefix)Tibia"] ?? 0.0) + sin(gaitPhase + .pi / 2) * walkDrive * 0.75
+        let neutralCoxa = packet.jointAnglesRad["\(prefix)Coxa"] ?? 0.0
+        let neutralFemur = packet.jointAnglesRad["\(prefix)Femur"] ?? 0.0
+        let neutralTibia = packet.jointAnglesRad["\(prefix)Tibia"] ?? 0.0
+        let clampedStride = min(max(strideDrive, 0.0), 1.4)
+        let sideDirection: Float = prefix.hasPrefix("L") ? 1.0 : -1.0
+
+        let coxaBase: Float
+        let femurBase: Float
+        let tibiaBase: Float
+
+        switch behavior {
+        case "groom":
+            coxaBase = sideDirection * 0.52
+            femurBase = -0.94
+            tibiaBase = 1.08
+        case "feed":
+            coxaBase = neutralCoxa + sideDirection * 0.06
+            femurBase = neutralFemur - 0.12
+            tibiaBase = neutralTibia + 0.18
+        default:
+            coxaBase = neutralCoxa
+            femurBase = neutralFemur
+            tibiaBase = neutralTibia
+        }
+
+        let strideScale: Float
+        switch behavior {
+        case "groom":
+            strideScale = 0.08
+        case "feed":
+            strideScale = min(clampedStride, 0.18)
+        default:
+            strideScale = clampedStride
+        }
+
+        let coxa = coxaBase + sin(gaitPhase) * strideScale * 0.36
+        let femur = femurBase + cos(gaitPhase) * strideScale * 0.44
+        let tibia = tibiaBase + sin(gaitPhase + .pi / 2) * strideScale * 0.62
 
         let shoulder = rig.shoulder
         let upperVector = rotate(rig.knee - rig.shoulder, angle: coxa)
@@ -439,7 +437,11 @@ final class FlyWorldSceneController {
         }
     }
 
-    private func refreshMetadata(packet: FlyWorldPosePacket, source: FlyWorldPosePacketSource?) {
+    private func refreshMetadata(
+        packet: FlyWorldPosePacket,
+        source: FlyWorldPosePacketSource?,
+        behavior: String
+    ) {
         guard let current = metadata else { return }
         metadata = FlyWorldSceneMetadata(
             graphSourceLabel: current.graphSourceLabel,
@@ -449,7 +451,7 @@ final class FlyWorldSceneController {
             graphNotes: current.graphNotes,
             poseSourceLabel: source?.label,
             poseSourceLocation: source?.location,
-            behavior: packet.behavior,
+            behavior: behavior,
             jointCount: packet.jointAnglesRad.count,
             brainChannelCount: packet.brainState.count,
             worldObjectCount: packet.worldObjectsOrDefault.isEmpty ? Self.defaultWorldObjects.count : packet.worldObjectsOrDefault.count,

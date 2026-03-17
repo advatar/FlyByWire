@@ -11,6 +11,7 @@
 		129BF604F7E7EA876BAC8CD9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5FD36CB402EAD9E3F4F5974 /* ContentView.swift */; };
 		176B2393BAA86791678970F9 /* flybrain_for_vision_pro.json in Resources */ = {isa = PBXBuildFile; fileRef = 8618E2FA8962471B432161AF /* flybrain_for_vision_pro.json */; };
 		26AE408A8C387E4C342AA716 /* FlyBrainWorldVisionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBCDDAC7233142FA313EF3E /* FlyBrainWorldVisionApp.swift */; };
+		44911569C8E2A4C63161C6FB /* FlyWorldBrainDrivenMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE90AD86A05286B8C5B4B778 /* FlyWorldBrainDrivenMotion.swift */; };
 		495817836E1BA1A4414F13C4 /* FlyWorldGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1D3EFDB55D2237C4772C423 /* FlyWorldGraph.swift */; };
 		73114EC298FC8E746B3E510C /* vision_pro_pose_schema.json in Resources */ = {isa = PBXBuildFile; fileRef = 024F3FCD0DA5057BC1FCD5AC /* vision_pro_pose_schema.json */; };
 		9255EF6CDE29A2BCB36A5CB5 /* FlyWorldViewerSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E9A6B6008B33AD47204C1F9 /* FlyWorldViewerSettings.swift */; };
@@ -29,6 +30,7 @@
 		D1D3EFDB55D2237C4772C423 /* FlyWorldGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldGraph.swift; sourceTree = "<group>"; };
 		E450B14F1CDFF5284EA34A91 /* FlyWorldPosePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldPosePacket.swift; sourceTree = "<group>"; };
 		E5FD36CB402EAD9E3F4F5974 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		EE90AD86A05286B8C5B4B778 /* FlyWorldBrainDrivenMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldBrainDrivenMotion.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -75,6 +77,7 @@
 		70F175434A648D28A489CE11 /* FlyWorldShared */ = {
 			isa = PBXGroup;
 			children = (
+				EE90AD86A05286B8C5B4B778 /* FlyWorldBrainDrivenMotion.swift */,
 				D1D3EFDB55D2237C4772C423 /* FlyWorldGraph.swift */,
 				E450B14F1CDFF5284EA34A91 /* FlyWorldPosePacket.swift */,
 				659691E462162AA05279DA9B /* FlyWorldSceneController.swift */,
@@ -213,6 +216,7 @@
 			files = (
 				129BF604F7E7EA876BAC8CD9 /* ContentView.swift in Sources */,
 				26AE408A8C387E4C342AA716 /* FlyBrainWorldVisionApp.swift in Sources */,
+				44911569C8E2A4C63161C6FB /* FlyWorldBrainDrivenMotion.swift in Sources */,
 				495817836E1BA1A4414F13C4 /* FlyWorldGraph.swift in Sources */,
 				A67B53C79446B11F4BBB4CBE /* FlyWorldPosePacket.swift in Sources */,
 				115212DB5784EEBED38647FE /* FlyWorldSceneController.swift in Sources */,

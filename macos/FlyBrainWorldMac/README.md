@@ -2,7 +2,7 @@
 
 macOS RealityKit companion app for the whole-fly scene.
 
-It uses the same shared graph and pose packet contract as the Vision Pro app, but renders the fly in a regular desktop window with a flat simulation-style arena, nectar dish, and demo walking when no live packet is present.
+It uses the same shared graph and pose packet contract as the Vision Pro app, but renders the fly in a regular desktop window with a flat simulation-style arena, nectar dish, and a built-in descending-controller fallback when no live Documents pose stream is present.
 
 ## Open in Xcode
 
@@ -38,4 +38,4 @@ The pose/world stream uses these packet names:
 - `fly_world_pose_packet.json`
 - `sample_vision_pro_pose_packet.json`
 
-If no external packet exists, the bundled sample packet and arena objects are used, and the fly auto-walks a demo loop.
+If no external packet exists, the bundled sample packet and arena objects are used, and the fly moves from the packet's brain-state channels through the shared fallback locomotion/feeding controller.

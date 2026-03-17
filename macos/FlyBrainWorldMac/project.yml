@@ -22,3 +22,15 @@ targets:
         buildPhase: resources
       - path: ../../vision-pro/FlyBrainVision/FlyBrainVision/Resources/flybrain_for_vision_pro.json
         buildPhase: resources
+  FlyBrainWorldMacTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: FlyBrainWorldMac/Tests
+    dependencies:
+      - target: FlyBrainWorldMac
+    settings:
+      base:
+        PRODUCT_NAME: FlyBrainWorldMacTests
+        PRODUCT_MODULE_NAME: FlyBrainWorldMacTests

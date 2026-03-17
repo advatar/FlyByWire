@@ -68,10 +68,10 @@ struct FlyWorldControlWindow: View {
                     Text("Movement")
                         .font(.headline)
 
-                    Text("If there is no live pose packet in the app Documents directory, the fly auto-walks a demo loop and periodically drinks at the nectar dish.")
+                    Text("If there is no live Documents pose packet, the viewer uses the packet's brain-state channels and arena objects to drive a built-in descending-controller fallback.")
                         .foregroundStyle(.secondary)
 
-                    Text("To drive real motion, keep writing `vision_pro_pose_packet.json` or `fly_world_pose_packet.json` into the app Documents directory at roughly 15-30 Hz.")
+                    Text("To drive direct body motion, keep writing `vision_pro_pose_packet.json` or `fly_world_pose_packet.json` into the app Documents directory at roughly 15-30 Hz.")
                         .foregroundStyle(.secondary)
                 }
 

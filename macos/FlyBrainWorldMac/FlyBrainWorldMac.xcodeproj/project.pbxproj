@@ -11,21 +11,36 @@
 		3823B5C5502AA6CF83930E6C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E231E66A4958C532C2C010 /* ContentView.swift */; };
 		4DAA8CE63909B4CF7E596253 /* sample_vision_pro_pose_packet.json in Resources */ = {isa = PBXBuildFile; fileRef = FD7BF052624DA74BCE999B08 /* sample_vision_pro_pose_packet.json */; };
 		6D8C32E6A9EA951AD623B4BC /* vision_pro_pose_schema.json in Resources */ = {isa = PBXBuildFile; fileRef = 8C90FF0946614FB330D48741 /* vision_pro_pose_schema.json */; };
+		8ADC5294C7C43F60DB8D8979 /* FlyWorldBrainDrivenMotionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837B15F98E39205BC8E5D8B2 /* FlyWorldBrainDrivenMotionTests.swift */; };
 		AC48C68759CDFB301CD1F360 /* flybrain_for_vision_pro.json in Resources */ = {isa = PBXBuildFile; fileRef = 990253EFDCD66DDA7D445072 /* flybrain_for_vision_pro.json */; };
 		B26BC655CF58DCA198D42EE9 /* FlyWorldGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25CBCC64C4967782E70F62A9 /* FlyWorldGraph.swift */; };
+		DFD7ADC855CA57537E6C1F5C /* FlyWorldBrainDrivenMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5AC07E8B268CBCBE1179ABF /* FlyWorldBrainDrivenMotion.swift */; };
 		E961B86F540DE61E7F6A97CF /* FlyWorldPosePacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65998D55F5B87DF1B268FE1B /* FlyWorldPosePacket.swift */; };
 		F11252FCE5D98334F895E647 /* FlyWorldSceneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 904B2962A42FDD64E71800A0 /* FlyWorldSceneController.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4DFD333875BC7AA793704E46 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D4AFA01D22C35340D7EF8C3A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DC9659372A4F8CC230AC0179;
+			remoteInfo = FlyBrainWorldMac;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		12E231E66A4958C532C2C010 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		25CBCC64C4967782E70F62A9 /* FlyWorldGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldGraph.swift; sourceTree = "<group>"; };
 		65998D55F5B87DF1B268FE1B /* FlyWorldPosePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldPosePacket.swift; sourceTree = "<group>"; };
+		837B15F98E39205BC8E5D8B2 /* FlyWorldBrainDrivenMotionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldBrainDrivenMotionTests.swift; sourceTree = "<group>"; };
 		8C90FF0946614FB330D48741 /* vision_pro_pose_schema.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = vision_pro_pose_schema.json; sourceTree = "<group>"; };
 		904B2962A42FDD64E71800A0 /* FlyWorldSceneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldSceneController.swift; sourceTree = "<group>"; };
 		96171595F130224E40302E4E /* FlyBrainWorldMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyBrainWorldMacApp.swift; sourceTree = "<group>"; };
 		990253EFDCD66DDA7D445072 /* flybrain_for_vision_pro.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = flybrain_for_vision_pro.json; sourceTree = "<group>"; };
+		A5AC07E8B268CBCBE1179ABF /* FlyWorldBrainDrivenMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldBrainDrivenMotion.swift; sourceTree = "<group>"; };
 		C5B49EE96D3FCFE56C600533 /* FlyBrainWorldMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlyBrainWorldMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EC55C36992AF1B5ABCED1DE4 /* FlyBrainWorldMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlyBrainWorldMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FD7BF052624DA74BCE999B08 /* sample_vision_pro_pose_packet.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sample_vision_pro_pose_packet.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -33,6 +48,7 @@
 		0115C57207F2EE326197DB2F /* FlyWorldShared */ = {
 			isa = PBXGroup;
 			children = (
+				A5AC07E8B268CBCBE1179ABF /* FlyWorldBrainDrivenMotion.swift */,
 				25CBCC64C4967782E70F62A9 /* FlyWorldGraph.swift */,
 				65998D55F5B87DF1B268FE1B /* FlyWorldPosePacket.swift */,
 				904B2962A42FDD64E71800A0 /* FlyWorldSceneController.swift */,
@@ -54,6 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				6938F7A2D2C949AD30C23EC4 /* Sources */,
+				59F7A36E6DBA04C32E2759C7 /* Tests */,
 			);
 			path = FlyBrainWorldMac;
 			sourceTree = "<group>";
@@ -83,6 +100,14 @@
 			path = FlyBrainVision;
 			sourceTree = "<group>";
 		};
+		59F7A36E6DBA04C32E2759C7 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				837B15F98E39205BC8E5D8B2 /* FlyWorldBrainDrivenMotionTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		60D76B24738A769A4135F394 /* shared */ = {
 			isa = PBXGroup;
 			children = (
@@ -105,6 +130,7 @@
 			isa = PBXGroup;
 			children = (
 				C5B49EE96D3FCFE56C600533 /* FlyBrainWorldMac.app */,
+				EC55C36992AF1B5ABCED1DE4 /* FlyBrainWorldMacTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -137,6 +163,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		C14D1EFCD7801587861EC7D8 /* FlyBrainWorldMacTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F2CAA5275816010AE4801068 /* Build configuration list for PBXNativeTarget "FlyBrainWorldMacTests" */;
+			buildPhases = (
+				71EECADFF99616DCBF6EF631 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CA94316CA46A44F5C8323107 /* PBXTargetDependency */,
+			);
+			name = FlyBrainWorldMacTests;
+			packageProductDependencies = (
+			);
+			productName = FlyBrainWorldMacTests;
+			productReference = EC55C36992AF1B5ABCED1DE4 /* FlyBrainWorldMacTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		DC9659372A4F8CC230AC0179 /* FlyBrainWorldMac */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 583501BE0114C02268516AFF /* Build configuration list for PBXNativeTarget "FlyBrainWorldMac" */;
@@ -164,6 +208,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					C14D1EFCD7801587861EC7D8 = {
+						ProvisioningStyle = Automatic;
+					};
 					DC9659372A4F8CC230AC0179 = {
 						ProvisioningStyle = Automatic;
 					};
@@ -184,6 +231,7 @@
 			projectRoot = "";
 			targets = (
 				DC9659372A4F8CC230AC0179 /* FlyBrainWorldMac */,
+				C14D1EFCD7801587861EC7D8 /* FlyBrainWorldMacTests */,
 			);
 		};
 /* End PBXProject section */
@@ -202,12 +250,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		71EECADFF99616DCBF6EF631 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8ADC5294C7C43F60DB8D8979 /* FlyWorldBrainDrivenMotionTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		79B20C8969269F31DA318620 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				3823B5C5502AA6CF83930E6C /* ContentView.swift in Sources */,
 				2B97AF51DA022DE25EE15680 /* FlyBrainWorldMacApp.swift in Sources */,
+				DFD7ADC855CA57537E6C1F5C /* FlyWorldBrainDrivenMotion.swift in Sources */,
 				B26BC655CF58DCA198D42EE9 /* FlyWorldGraph.swift in Sources */,
 				E961B86F540DE61E7F6A97CF /* FlyWorldPosePacket.swift in Sources */,
 				F11252FCE5D98334F895E647 /* FlyWorldSceneController.swift in Sources */,
@@ -215,6 +272,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CA94316CA46A44F5C8323107 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DC9659372A4F8CC230AC0179 /* FlyBrainWorldMac */;
+			targetProxy = 4DFD333875BC7AA793704E46 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		0B2DE71CF892BDCA4E8E57A2 /* Release */ = {
@@ -276,6 +341,24 @@
 				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
+		};
+		3A90A8928FC4C7203F846308 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_MODULE_NAME = FlyBrainWorldMacTests;
+				PRODUCT_NAME = FlyBrainWorldMacTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FlyBrainWorldMac.app/Contents/MacOS/FlyBrainWorldMac";
+			};
+			name = Debug;
 		};
 		3D9EA7BE99B1F9BCE44A66BB /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -344,6 +427,24 @@
 			};
 			name = Debug;
 		};
+		A2FBB7EB38CACF298C418F7A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_MODULE_NAME = FlyBrainWorldMacTests;
+				PRODUCT_NAME = FlyBrainWorldMacTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FlyBrainWorldMac.app/Contents/MacOS/FlyBrainWorldMac";
+			};
+			name = Release;
+		};
 		D74FE8CF053CD4655A03635F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -389,6 +490,15 @@
 			buildConfigurations = (
 				3D9EA7BE99B1F9BCE44A66BB /* Debug */,
 				0B2DE71CF892BDCA4E8E57A2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F2CAA5275816010AE4801068 /* Build configuration list for PBXNativeTarget "FlyBrainWorldMacTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3A90A8928FC4C7203F846308 /* Debug */,
+				A2FBB7EB38CACF298C418F7A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
