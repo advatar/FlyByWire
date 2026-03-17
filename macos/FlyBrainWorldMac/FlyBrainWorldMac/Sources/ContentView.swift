@@ -63,7 +63,7 @@ private struct MacControlPanel: View {
                 Text("Fly World")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
 
-                Text("macOS RealityKit viewer for the whole fly, connectome graph, flat arena floor, and nectar dish. If no live Documents pose stream is present, the bundled brain-state channels drive a built-in descending-controller fallback.")
+                Text("macOS RealityKit viewer for the whole fly, connectome graph, flat arena floor, and nectar dish. If no live Documents pose stream is present, the bundled brain-state channels drive a six-leg contact locomotion fallback with grounded body support.")
                     .font(.body)
                     .foregroundStyle(.secondary)
 

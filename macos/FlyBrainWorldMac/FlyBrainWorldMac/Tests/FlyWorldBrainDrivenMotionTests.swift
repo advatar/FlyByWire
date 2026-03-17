@@ -80,6 +80,87 @@ final class FlyWorldBrainDrivenMotionTests: XCTestCase {
         XCTAssertGreaterThan(advanced.rightStrideDrive, 0.6)
     }
 
+    func testClosedLoopLocomotionKeepsSupportLegsOnFloor() {
+        var controller = FlyWorldBrainDrivenMotionController()
+        let packet = makePacket(
+            rootPosition: [0.0, 0.0, 0.2],
+            brainState: [
+                "oDN1": 0.74,
+                "DNa01": 0.08,
+                "DNa02": 0.03
+            ],
+            behavior: "walk"
+        )
+
+        controller.reset(using: packet, referenceTime: 0.0)
+        let frame = controller.synthesize(packet: packet, time: 0.4)
+        let supportingFeet = makeLegPoses(from: frame, packet: packet).filter(\.isInContact)
+        let supportAverageY =
+            supportingFeet.reduce(0.0) { partialResult, pose in
+                partialResult + frame.rootPositionMm.z * FlyWorldLegKinematics.sceneMillimeterScale + FlyWorldLegKinematics.flyRootVerticalBiasScene + pose.tip.y
+            } / Float(supportingFeet.count)
+
+        XCTAssertFalse(supportingFeet.isEmpty)
+        XCTAssertEqual(supportAverageY, FlyWorldLegKinematics.arenaFloorSceneY, accuracy: 0.025)
+    }
+
+    func testTripodSupportAlternatesAcrossGaitCycle() {
+        let packet = makePacket(
+            rootPosition: [0.0, 0.0, 0.2],
+            brainState: [
+                "oDN1": 0.78
+            ],
+            behavior: "walk"
+        )
+
+        let earlySupport = Set(
+            FlyWorldLegID.allCases.compactMap { leg -> FlyWorldLegID? in
+                let pose = FlyWorldLegKinematics.pose(
+                    leg: leg,
+                    packet: packet,
+                    gaitPhase: 0.0,
+                    leftStrideDrive: 0.78,
+                    rightStrideDrive: 0.78,
+                    behavior: "walk"
+                )
+                return pose.isInContact ? leg : nil
+            }
+        )
+        let oppositeSupport = Set(
+            FlyWorldLegID.allCases.compactMap { leg -> FlyWorldLegID? in
+                let pose = FlyWorldLegKinematics.pose(
+                    leg: leg,
+                    packet: packet,
+                    gaitPhase: .pi,
+                    leftStrideDrive: 0.78,
+                    rightStrideDrive: 0.78,
+                    behavior: "walk"
+                )
+                return pose.isInContact ? leg : nil
+            }
+        )
+
+        XCTAssertEqual(earlySupport, [.rightFront, .leftMid, .rightHind])
+        XCTAssertEqual(oppositeSupport, [.leftFront, .rightMid, .leftHind])
+    }
+
+    func testIdleBrainDrivenMotionDoesNotDrift() {
+        var controller = FlyWorldBrainDrivenMotionController()
+        let packet = makePacket(
+            rootPosition: [0.0, 0.0, 0.2],
+            brainState: [:],
+            behavior: "idle"
+        )
+
+        controller.reset(using: packet, referenceTime: 0.0)
+        let initial = controller.synthesize(packet: packet, time: 0.0)
+        let advanced = controller.synthesize(packet: packet, time: 1.0)
+
+        XCTAssertEqual(advanced.behavior, "idle")
+        XCTAssertEqual(advanced.rootPositionMm.x, initial.rootPositionMm.x, accuracy: 0.0001)
+        XCTAssertEqual(advanced.rootPositionMm.y, initial.rootPositionMm.y, accuracy: 0.0001)
+    }
+
     func testFeedControllerSlowsAsFlyReachesDish() {
         let worldObjects = [
             FlyWorldPosePacket.WorldObject(
@@ -153,5 +234,21 @@ final class FlyWorldBrainDrivenMotionTests: XCTestCase {
             behavior: behavior,
             worldObjects: worldObjects
         )
+    }
+
+    private func makeLegPoses(
+        from frame: FlyWorldMotionFrame,
+        packet: FlyWorldPosePacket
+    ) -> [FlyWorldLegPose] {
+        FlyWorldLegID.allCases.map { leg in
+            FlyWorldLegKinematics.pose(
+                leg: leg,
+                packet: packet,
+                gaitPhase: frame.gaitPhase,
+                leftStrideDrive: frame.leftStrideDrive,
+                rightStrideDrive: frame.rightStrideDrive,
+                behavior: frame.behavior
+            )
+        }
     }
 }

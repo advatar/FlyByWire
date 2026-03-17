@@ -68,7 +68,7 @@ struct FlyWorldControlWindow: View {
                     Text("Movement")
                         .font(.headline)
 
-                    Text("If there is no live Documents pose packet, the viewer uses the packet's brain-state channels and arena objects to drive a built-in descending-controller fallback.")
+                    Text("If there is no live Documents pose packet, the viewer uses the packet's brain-state channels and arena objects to drive a six-leg contact locomotion fallback with grounded body support.")
                         .foregroundStyle(.secondary)
 
                     Text("To drive direct body motion, keep writing `vision_pro_pose_packet.json` or `fly_world_pose_packet.json` into the app Documents directory at roughly 15-30 Hz.")

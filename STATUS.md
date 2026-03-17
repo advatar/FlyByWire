@@ -9,3 +9,5 @@
 - [x] Refresh viewer/docs copy to describe brain-driven fallback motion instead of the old demo walk.
 - [x] Add macOS mouse controls for orbit, pan, and zoom in the fly-world viewer.
 - [x] Add unit tests for macOS camera interaction math and update viewer instructions.
+- [x] Replace the fallback root-motion shortcut with six-leg contact-driven locomotion and ground contact.
+- [x] Add tests and viewer copy updates for closed-loop locomotion behavior.

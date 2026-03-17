@@ -74,8 +74,8 @@ final class FlyWorldSceneController {
     private var motionMode: FlyWorldMotionMode = .brainDrivenFallback
     private var brainMotionController = FlyWorldBrainDrivenMotionController()
 
-    private let floorY: Float = -0.34
-    private let millimeterScale: Float = 0.12
+    private let floorY: Float = FlyWorldLegKinematics.arenaFloorSceneY
+    private let millimeterScale: Float = FlyWorldLegKinematics.sceneMillimeterScale
     private let simulationToSceneRotation = simd_quatf(angle: -.pi / 2, axis: SIMD3<Float>(1.0, 0.0, 0.0))
 
     private(set) var metadata: FlyWorldSceneMetadata?
@@ -215,88 +215,34 @@ final class FlyWorldSceneController {
         rig: FlyWorldBuild
     ) {
         let phase = motion.gaitPhase
+        let legPoses = FlyWorldLegID.allCases.map { leg in
+            FlyWorldLegKinematics.pose(
+                leg: leg,
+                packet: packet,
+                gaitPhase: phase,
+                leftStrideDrive: motion.leftStrideDrive,
+                rightStrideDrive: motion.rightStrideDrive,
+                behavior: motion.behavior
+            )
+        }
 
-        applyLeg(
-            rig.leftFrontLeg,
-            packet: packet,
-            prefix: "LF",
-            gaitPhase: phase,
-            strideDrive: motion.leftStrideDrive,
-            behavior: motion.behavior
-        )
-        applyLeg(
-            rig.rightFrontLeg,
-            packet: packet,
-            prefix: "RF",
-            gaitPhase: phase + .pi,
-            strideDrive: motion.rightStrideDrive,
-            behavior: motion.behavior
-        )
+        for pose in legPoses {
+            guard let legRig = rig.legs[pose.id] else { continue }
+            retargetLeg(legRig, pose: pose)
+        }
+
         applyProboscis(rig: rig, feedDrive: motion.feedDrive, phase: phase)
-        applyWingMotion(rig: rig, escapeDrive: motion.escapeDrive, phase: phase)
+        applyWingMotion(rig: rig, behavior: motion.behavior, escapeDrive: motion.escapeDrive, phase: phase)
         applyBrainHalo(rig: rig, brainDrive: motion.brainDrive, behavior: motion.behavior, phase: phase)
     }
 
-    private func applyLeg(
+    private func retargetLeg(
         _ rig: FlyWorldLegRig,
-        packet: FlyWorldPosePacket,
-        prefix: String,
-        gaitPhase: Float,
-        strideDrive: Float,
-        behavior: String
+        pose: FlyWorldLegPose
     ) {
-        let neutralCoxa = packet.jointAnglesRad["\(prefix)Coxa"] ?? 0.0
-        let neutralFemur = packet.jointAnglesRad["\(prefix)Femur"] ?? 0.0
-        let neutralTibia = packet.jointAnglesRad["\(prefix)Tibia"] ?? 0.0
-        let clampedStride = min(max(strideDrive, 0.0), 1.4)
-        let sideDirection: Float = prefix.hasPrefix("L") ? 1.0 : -1.0
-
-        let coxaBase: Float
-        let femurBase: Float
-        let tibiaBase: Float
-
-        switch behavior {
-        case "groom":
-            coxaBase = sideDirection * 0.52
-            femurBase = -0.94
-            tibiaBase = 1.08
-        case "feed":
-            coxaBase = neutralCoxa + sideDirection * 0.06
-            femurBase = neutralFemur - 0.12
-            tibiaBase = neutralTibia + 0.18
-        default:
-            coxaBase = neutralCoxa
-            femurBase = neutralFemur
-            tibiaBase = neutralTibia
-        }
-
-        let strideScale: Float
-        switch behavior {
-        case "groom":
-            strideScale = 0.08
-        case "feed":
-            strideScale = min(clampedStride, 0.18)
-        default:
-            strideScale = clampedStride
-        }
-
-        let coxa = coxaBase + sin(gaitPhase) * strideScale * 0.36
-        let femur = femurBase + cos(gaitPhase) * strideScale * 0.44
-        let tibia = tibiaBase + sin(gaitPhase + .pi / 2) * strideScale * 0.62
-
-        let shoulder = rig.shoulder
-        let upperVector = rotate(rig.knee - rig.shoulder, angle: coxa)
-        let knee = shoulder + upperVector
-
-        let lowerVector = rotate(rig.ankle - rig.knee, angle: coxa + femur)
-        let ankle = knee + lowerVector
-
-        let tipVector = rotate(rig.tip - rig.ankle, angle: coxa + femur + tibia)
-        let tip = ankle + tipVector
-
-        FlyWorldEntityFactory.retargetBone(rig.upper, from: shoulder, to: knee, radius: rig.upperRadius)
-        FlyWorldEntityFactory.retargetBone(rig.lower, from: knee, to: ankle, radius: rig.lowerRadius)
-        FlyWorldEntityFactory.retargetBone(rig.tarsus, from: ankle, to: tip, radius: rig.tarsusRadius)
+        FlyWorldEntityFactory.retargetBone(rig.upper, from: pose.shoulder, to: pose.knee, radius: rig.upperRadius)
+        FlyWorldEntityFactory.retargetBone(rig.lower, from: pose.knee, to: pose.ankle, radius: rig.lowerRadius)
+        FlyWorldEntityFactory.retargetBone(rig.tarsus, from: pose.ankle, to: pose.tip, radius: rig.tarsusRadius)
     }
 
     private func applyProboscis(rig: FlyWorldBuild, feedDrive: Float, phase: Float) {
@@ -310,8 +256,16 @@ final class FlyWorldSceneController {
         )
     }
 
-    private func applyWingMotion(rig: FlyWorldBuild, escapeDrive: Float, phase: Float) {
-        let flap = max(escapeDrive, 0.08) * sin(phase * 11.0)
+    private func applyWingMotion(rig: FlyWorldBuild, behavior: String, escapeDrive: Float, phase: Float) {
+        let flapDrive: Float
+        switch behavior {
+        case "escape":
+            flapDrive = max(escapeDrive, 0.58)
+        default:
+            flapDrive = 0.0
+        }
+
+        let flap = flapDrive * sin(phase * 11.0)
         rig.leftWing.orientation =
             rig.leftWingBaseOrientation
             * simd_quatf(angle: flap * 0.35, axis: SIMD3<Float>(0.0, 0.0, 1.0))
@@ -534,10 +488,6 @@ final class FlyWorldSceneController {
         arenaRoot.addChild(targetMarker)
     }
 
-    private func rotate(_ vector: SIMD3<Float>, angle: Float) -> SIMD3<Float> {
-        simd_quatf(angle: angle, axis: SIMD3<Float>(0.0, 0.0, 1.0)).act(vector)
-    }
-
     private static func makeFallbackPacket() -> FlyWorldPosePacket {
         FlyWorldPosePacket(
             timestamp: Date().timeIntervalSince1970,
@@ -607,8 +557,7 @@ final class FlyWorldSceneController {
 private struct FlyWorldBuild {
     let root: Entity
     let poseAnchor: Entity
-    let leftFrontLeg: FlyWorldLegRig
-    let rightFrontLeg: FlyWorldLegRig
+    let legs: [FlyWorldLegID: FlyWorldLegRig]
     let leftWing: ModelEntity
     let rightWing: ModelEntity
     let leftWingBaseOrientation: simd_quatf
@@ -648,7 +597,7 @@ private enum FlyWorldEntityFactory {
         let poseAnchor = Entity()
         let flyRoot = Entity()
         flyRoot.name = "WholeFly"
-        flyRoot.position = SIMD3<Float>(0.0, 0.02, 0.0)
+        flyRoot.position = SIMD3<Float>(0.0, FlyWorldLegKinematics.flyRootVerticalBiasScene, 0.0)
         flyRoot.orientation =
             simd_quatf(angle: -Float.pi / 7.0, axis: SIMD3<Float>(0.0, 1.0, 0.0)) *
             simd_quatf(angle: Float.pi / 22.0, axis: SIMD3<Float>(0.0, 0.0, 1.0))
@@ -779,8 +728,7 @@ private enum FlyWorldEntityFactory {
         var rightWing: ModelEntity?
         var leftWingBaseOrientation = simd_quatf(angle: 0.0, axis: SIMD3<Float>(0.0, 1.0, 0.0))
         var rightWingBaseOrientation = leftWingBaseOrientation
-        var leftFrontLeg: FlyWorldLegRig?
-        var rightFrontLeg: FlyWorldLegRig?
+        var builtLegs: [FlyWorldLegID: FlyWorldLegRig] = [:]
 
         for side in [Float(-1.0), Float(1.0)] {
             let antenna = makeBone(
@@ -849,9 +797,13 @@ private enum FlyWorldEntityFactory {
 
             let legSet = makeLegSet(on: flyRoot, side: side, material: brown)
             if side < 0 {
-                leftFrontLeg = legSet.front
+                builtLegs[.leftFront] = legSet.front
+                builtLegs[.leftMid] = legSet.mid
+                builtLegs[.leftHind] = legSet.hind
             } else {
-                rightFrontLeg = legSet.front
+                builtLegs[.rightFront] = legSet.front
+                builtLegs[.rightMid] = legSet.mid
+                builtLegs[.rightHind] = legSet.hind
             }
         }
 
@@ -866,8 +818,9 @@ private enum FlyWorldEntityFactory {
         return FlyWorldBuild(
             root: sceneRoot,
             poseAnchor: poseAnchor,
-            leftFrontLeg: leftFrontLeg ?? makeFallbackLegRig(),
-            rightFrontLeg: rightFrontLeg ?? makeFallbackLegRig(),
+            legs: FlyWorldLegID.allCases.reduce(into: [:]) { result, leg in
+                result[leg] = builtLegs[leg] ?? makeFallbackLegRig(for: leg)
+            },
             leftWing: leftWing ?? ModelEntity(),
             rightWing: rightWing ?? ModelEntity(),
             leftWingBaseOrientation: leftWingBaseOrientation,
@@ -925,60 +878,38 @@ private enum FlyWorldEntityFactory {
     }
 
     private static func makeLegSet(on root: Entity, side: Float, material: any Material) -> (front: FlyWorldLegRig, mid: FlyWorldLegRig, hind: FlyWorldLegRig) {
-        let legPoints: [(SIMD3<Float>, SIMD3<Float>, SIMD3<Float>, SIMD3<Float>)] = [
-            (
-                SIMD3<Float>(-0.03, -0.01, side * 0.085),
-                SIMD3<Float>(-0.11, -0.12, side * 0.17),
-                SIMD3<Float>(-0.06, -0.30, side * 0.24),
-                SIMD3<Float>(0.0, -0.32, side * 0.25)
-            ),
-            (
-                SIMD3<Float>(0.045, -0.02, side * 0.095),
-                SIMD3<Float>(0.02, -0.15, side * 0.22),
-                SIMD3<Float>(0.11, -0.32, side * 0.26),
-                SIMD3<Float>(0.17, -0.34, side * 0.27)
-            ),
-            (
-                SIMD3<Float>(0.13, -0.02, side * 0.085),
-                SIMD3<Float>(0.20, -0.16, side * 0.18),
-                SIMD3<Float>(0.31, -0.31, side * 0.24),
-                SIMD3<Float>(0.37, -0.33, side * 0.25)
-            )
-        ]
-
-        let radii: [(Float, Float, Float)] = [
-            (0.0065, 0.0045, 0.0026),
-            (0.0060, 0.0042, 0.0025),
-            (0.0060, 0.0040, 0.0025)
-        ]
-
+        let legIDs: [FlyWorldLegID] = side < 0
+            ? [.leftFront, .leftMid, .leftHind]
+            : [.rightFront, .rightMid, .rightHind]
         var rigs: [FlyWorldLegRig] = []
-        for (index, points) in legPoints.enumerated() {
+        for leg in legIDs {
+            let geometry = FlyWorldLegKinematics.geometry(for: leg)
+            let radii = FlyWorldLegKinematics.radii(for: leg)
             let upper = makeBone(
-                name: "Leg\(side < 0 ? "L" : "R")\(index)Upper",
-                from: points.0,
-                to: points.1,
-                radius: radii[index].0,
+                name: "Leg\(leg.prefix)Upper",
+                from: geometry.shoulder,
+                to: geometry.knee,
+                radius: radii.0,
                 material: material,
                 opacity: 0.88
             )
             root.addChild(upper)
 
             let lower = makeBone(
-                name: "Leg\(side < 0 ? "L" : "R")\(index)Lower",
-                from: points.1,
-                to: points.2,
-                radius: radii[index].1,
+                name: "Leg\(leg.prefix)Lower",
+                from: geometry.knee,
+                to: geometry.ankle,
+                radius: radii.1,
                 material: material,
                 opacity: 0.88
             )
             root.addChild(lower)
 
             let tarsus = makeBone(
-                name: "Leg\(side < 0 ? "L" : "R")\(index)Tarsus",
-                from: points.2,
-                to: points.3,
-                radius: radii[index].2,
+                name: "Leg\(leg.prefix)Tarsus",
+                from: geometry.ankle,
+                to: geometry.tip,
+                radius: radii.2,
                 material: material,
                 opacity: 0.88
             )
@@ -989,13 +920,13 @@ private enum FlyWorldEntityFactory {
                     upper: upper,
                     lower: lower,
                     tarsus: tarsus,
-                    shoulder: points.0,
-                    knee: points.1,
-                    ankle: points.2,
-                    tip: points.3,
-                    upperRadius: radii[index].0,
-                    lowerRadius: radii[index].1,
-                    tarsusRadius: radii[index].2
+                    shoulder: geometry.shoulder,
+                    knee: geometry.knee,
+                    ankle: geometry.ankle,
+                    tip: geometry.tip,
+                    upperRadius: radii.0,
+                    lowerRadius: radii.1,
+                    tarsusRadius: radii.2
                 )
             )
         }
@@ -1118,19 +1049,21 @@ private enum FlyWorldEntityFactory {
         return entity
     }
 
-    private static func makeFallbackLegRig() -> FlyWorldLegRig {
+    private static func makeFallbackLegRig(for leg: FlyWorldLegID) -> FlyWorldLegRig {
         let dummy = ModelEntity(mesh: unitCylinderMesh, materials: [])
+        let geometry = FlyWorldLegKinematics.geometry(for: leg)
+        let radii = FlyWorldLegKinematics.radii(for: leg)
         return FlyWorldLegRig(
             upper: dummy,
             lower: dummy,
             tarsus: dummy,
-            shoulder: .zero,
-            knee: SIMD3<Float>(0.0, -0.1, 0.0),
-            ankle: SIMD3<Float>(0.0, -0.2, 0.0),
-            tip: SIMD3<Float>(0.0, -0.28, 0.0),
-            upperRadius: 0.006,
-            lowerRadius: 0.004,
-            tarsusRadius: 0.0025
+            shoulder: geometry.shoulder,
+            knee: geometry.knee,
+            ankle: geometry.ankle,
+            tip: geometry.tip,
+            upperRadius: radii.0,
+            lowerRadius: radii.1,
+            tarsusRadius: radii.2
         )
     }
 }
