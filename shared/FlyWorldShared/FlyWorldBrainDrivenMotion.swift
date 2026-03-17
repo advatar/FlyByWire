@@ -194,10 +194,11 @@ enum FlyWorldLegKinematics {
     static let flyGeometryScale: Float = 0.60
     static let flyRootVerticalBiasScene: Float = 0.02 * flyGeometryScale
     static let arenaFloorSceneY: Float = -0.34
-    static let arenaRadiusScene: Float = 0.52
+    static let arenaRadiusScene: Float = 1.05
 
     private static let arenaFloorMm = arenaFloorSceneY / sceneMillimeterScale
     private static let flyRootVerticalBiasMm = flyRootVerticalBiasScene / sceneMillimeterScale
+    static let arenaRadiusMm = arenaRadiusScene / sceneMillimeterScale
 
     static func geometry(for leg: FlyWorldLegID) -> FlyWorldLegGeometry {
         switch leg {
@@ -427,8 +428,6 @@ struct FlyWorldMotionFrame {
 }
 
 struct FlyWorldBrainDrivenMotionController {
-    private let arenaRadiusMm: Float = 3.8
-
     private var positionMm = SIMD3<Float>(0.0, 0.0, 0.2)
     private var heading: Float = 0.0
     private var gaitPhase: Float = 0.0
@@ -599,8 +598,8 @@ struct FlyWorldBrainDrivenMotionController {
 
     private func clampedToArena(_ planarPosition: SIMD2<Float>) -> SIMD2<Float> {
         let distance = simd_length(planarPosition)
-        guard distance > arenaRadiusMm else { return planarPosition }
-        return simd_normalize(planarPosition) * arenaRadiusMm
+        guard distance > FlyWorldLegKinematics.arenaRadiusMm else { return planarPosition }
+        return simd_normalize(planarPosition) * FlyWorldLegKinematics.arenaRadiusMm
     }
 }
 

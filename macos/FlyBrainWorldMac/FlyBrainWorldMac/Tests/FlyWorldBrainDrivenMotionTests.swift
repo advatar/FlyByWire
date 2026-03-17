@@ -171,8 +171,13 @@ final class FlyWorldBrainDrivenMotionTests: XCTestCase {
             SIMD3<Float>(-1.0, 0.0, 0.0)
         )
 
-        XCTAssertLessThan(bodyHalfLengthScene, FlyWorldLegKinematics.arenaRadiusScene * 0.72)
-        XCTAssertLessThan(bodyHalfWidthScene, FlyWorldLegKinematics.arenaRadiusScene * 0.55)
+        XCTAssertEqual(
+            FlyWorldLegKinematics.arenaRadiusMm,
+            FlyWorldLegKinematics.arenaRadiusScene / FlyWorldLegKinematics.sceneMillimeterScale,
+            accuracy: 0.0001
+        )
+        XCTAssertLessThan(bodyHalfLengthScene, FlyWorldLegKinematics.arenaRadiusScene * 0.35)
+        XCTAssertLessThan(bodyHalfWidthScene, FlyWorldLegKinematics.arenaRadiusScene * 0.20)
         XCTAssertGreaterThan(renderedForward.x, 0.85)
         XCTAssertLessThan(abs(renderedForward.z), 0.45)
     }

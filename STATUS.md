@@ -15,3 +15,5 @@
 - [x] Add a scale-fit test and refresh viewer copy if needed.
 - [x] Align fallback fly heading and sample turn bias so default walking reads as forward locomotion.
 - [x] Restore visible non-escape wing animation and add regression coverage for walk presentation.
+- [x] Enlarge the shared arena radius so the floor reads much bigger than the fly.
+- [x] Tighten arena-size regression coverage so the fly remains small relative to the floor.
