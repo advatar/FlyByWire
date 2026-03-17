@@ -39,3 +39,10 @@ The pose/world stream uses these packet names:
 - `sample_vision_pro_pose_packet.json`
 
 If no external packet exists, the bundled sample packet and arena objects are used, and the fly moves from the packet's brain-state channels through the shared fallback locomotion/feeding controller.
+
+## Viewer Controls
+
+- Drag with the mouse to orbit around the fly.
+- Shift-drag or right-drag to pan the scene.
+- Scroll the mouse wheel to zoom.
+- Use the Reset View button to return to the default framing.

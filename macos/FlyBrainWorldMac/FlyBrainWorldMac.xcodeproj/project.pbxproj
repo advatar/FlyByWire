@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0AEC5EDAC6F3625EFE8A9770 /* MacFlyWorldCameraControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A323177750F5FFFA8AC4974A /* MacFlyWorldCameraControls.swift */; };
+		20C2F528D8B4547041CDFE1F /* MacFlyWorldCameraStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 787FA5C6158DB78856888A27 /* MacFlyWorldCameraStateTests.swift */; };
 		2B97AF51DA022DE25EE15680 /* FlyBrainWorldMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96171595F130224E40302E4E /* FlyBrainWorldMacApp.swift */; };
 		3823B5C5502AA6CF83930E6C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E231E66A4958C532C2C010 /* ContentView.swift */; };
 		4DAA8CE63909B4CF7E596253 /* sample_vision_pro_pose_packet.json in Resources */ = {isa = PBXBuildFile; fileRef = FD7BF052624DA74BCE999B08 /* sample_vision_pro_pose_packet.json */; };
@@ -33,11 +35,13 @@
 		12E231E66A4958C532C2C010 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		25CBCC64C4967782E70F62A9 /* FlyWorldGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldGraph.swift; sourceTree = "<group>"; };
 		65998D55F5B87DF1B268FE1B /* FlyWorldPosePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldPosePacket.swift; sourceTree = "<group>"; };
+		787FA5C6158DB78856888A27 /* MacFlyWorldCameraStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacFlyWorldCameraStateTests.swift; sourceTree = "<group>"; };
 		837B15F98E39205BC8E5D8B2 /* FlyWorldBrainDrivenMotionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldBrainDrivenMotionTests.swift; sourceTree = "<group>"; };
 		8C90FF0946614FB330D48741 /* vision_pro_pose_schema.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = vision_pro_pose_schema.json; sourceTree = "<group>"; };
 		904B2962A42FDD64E71800A0 /* FlyWorldSceneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldSceneController.swift; sourceTree = "<group>"; };
 		96171595F130224E40302E4E /* FlyBrainWorldMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyBrainWorldMacApp.swift; sourceTree = "<group>"; };
 		990253EFDCD66DDA7D445072 /* flybrain_for_vision_pro.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = flybrain_for_vision_pro.json; sourceTree = "<group>"; };
+		A323177750F5FFFA8AC4974A /* MacFlyWorldCameraControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacFlyWorldCameraControls.swift; sourceTree = "<group>"; };
 		A5AC07E8B268CBCBE1179ABF /* FlyWorldBrainDrivenMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldBrainDrivenMotion.swift; sourceTree = "<group>"; };
 		C5B49EE96D3FCFE56C600533 /* FlyBrainWorldMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlyBrainWorldMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EC55C36992AF1B5ABCED1DE4 /* FlyBrainWorldMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlyBrainWorldMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -104,6 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				837B15F98E39205BC8E5D8B2 /* FlyWorldBrainDrivenMotionTests.swift */,
+				787FA5C6158DB78856888A27 /* MacFlyWorldCameraStateTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -122,6 +127,7 @@
 			children = (
 				12E231E66A4958C532C2C010 /* ContentView.swift */,
 				96171595F130224E40302E4E /* FlyBrainWorldMacApp.swift */,
+				A323177750F5FFFA8AC4974A /* MacFlyWorldCameraControls.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -255,6 +261,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8ADC5294C7C43F60DB8D8979 /* FlyWorldBrainDrivenMotionTests.swift in Sources */,
+				20C2F528D8B4547041CDFE1F /* MacFlyWorldCameraStateTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -268,6 +275,7 @@
 				B26BC655CF58DCA198D42EE9 /* FlyWorldGraph.swift in Sources */,
 				E961B86F540DE61E7F6A97CF /* FlyWorldPosePacket.swift in Sources */,
 				F11252FCE5D98334F895E647 /* FlyWorldSceneController.swift in Sources */,
+				0AEC5EDAC6F3625EFE8A9770 /* MacFlyWorldCameraControls.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

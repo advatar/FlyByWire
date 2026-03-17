@@ -3,11 +3,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var sceneController = FlyWorldSceneController()
-    @State private var sceneScale = Float(0.40)
-    @State private var worldYaw = Float(0.30)
-    @State private var worldPitch = Float(-0.16)
-    @State private var worldDistance = Float(1.55)
-    @State private var verticalOffset = Float(-0.18)
+    @State private var camera = MacFlyWorldCameraState()
 
     var body: some View {
         HSplitView {
@@ -21,6 +17,9 @@ struct ContentView: View {
             } placeholder: {
                 ProgressView("Building fly world...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .overlay {
+                MacFlyWorldMouseControls(camera: $camera)
             }
             .frame(minWidth: 960, minHeight: 760)
             .background(
@@ -37,11 +36,7 @@ struct ContentView: View {
             MacControlPanel(
                 metadata: sceneController.metadata,
                 errorMessage: sceneController.errorMessage,
-                sceneScale: $sceneScale,
-                worldYaw: $worldYaw,
-                worldPitch: $worldPitch,
-                worldDistance: $worldDistance,
-                verticalOffset: $verticalOffset
+                camera: $camera
             )
             .frame(width: 340)
         }
@@ -49,22 +44,18 @@ struct ContentView: View {
     }
 
     private func updateScenePlacement() {
-        sceneController.setSceneScale(sceneScale)
-        sceneController.root.position = [0.0, verticalOffset, -worldDistance]
+        sceneController.setSceneScale(camera.sceneScale)
+        sceneController.root.position = [camera.horizontalOffset, camera.verticalOffset, -camera.worldDistance]
         sceneController.root.orientation =
-            simd_quatf(angle: worldYaw, axis: [0, 1, 0]) *
-            simd_quatf(angle: worldPitch, axis: [1, 0, 0])
+            simd_quatf(angle: camera.worldYaw, axis: [0, 1, 0]) *
+            simd_quatf(angle: camera.worldPitch, axis: [1, 0, 0])
     }
 }
 
 private struct MacControlPanel: View {
     let metadata: FlyWorldSceneMetadata?
     let errorMessage: String?
-    @Binding var sceneScale: Float
-    @Binding var worldYaw: Float
-    @Binding var worldPitch: Float
-    @Binding var worldDistance: Float
-    @Binding var verticalOffset: Float
+    @Binding var camera: MacFlyWorldCameraState
 
     var body: some View {
         ScrollView {
@@ -76,13 +67,23 @@ private struct MacControlPanel: View {
                     .font(.body)
                     .foregroundStyle(.secondary)
 
-                VStack(alignment: .leading, spacing: 12) {
-                    MacSlider(title: "Scene Scale", value: $sceneScale, range: 0.75...1.35, format: "%.2fx")
-                    MacSlider(title: "Yaw", value: $worldYaw, range: -1.3...1.3, format: "%.2f")
-                    MacSlider(title: "Pitch", value: $worldPitch, range: -0.7...0.5, format: "%.2f")
-                    MacSlider(title: "Distance", value: $worldDistance, range: 1.4...3.0, format: "%.2f m")
-                    MacSlider(title: "Height", value: $verticalOffset, range: -0.35...0.35, format: "%.2f m")
+                Button("Reset View") {
+                    camera.reset()
                 }
+                .buttonStyle(.bordered)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    MacSlider(title: "Scene Scale", value: $camera.sceneScale, range: MacFlyWorldCameraState.sceneScaleRange, format: "%.2fx")
+                    MacSlider(title: "Yaw", value: $camera.worldYaw, range: MacFlyWorldCameraState.yawRange, format: "%.2f")
+                    MacSlider(title: "Pitch", value: $camera.worldPitch, range: MacFlyWorldCameraState.pitchRange, format: "%.2f")
+                    MacSlider(title: "Distance", value: $camera.worldDistance, range: MacFlyWorldCameraState.worldDistanceRange, format: "%.2f m")
+                    MacSlider(title: "Height", value: $camera.verticalOffset, range: MacFlyWorldCameraState.verticalOffsetRange, format: "%.2f m")
+                    MacSlider(title: "Horizontal", value: $camera.horizontalOffset, range: MacFlyWorldCameraState.horizontalOffsetRange, format: "%.2f m")
+                }
+
+                Text("Mouse: drag to orbit, Shift-drag or right-drag to pan, and scroll to zoom. Trackpad pinch also zooms.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
 
                 Divider()
 

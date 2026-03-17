@@ -7,3 +7,5 @@
 - [x] Add unit tests for the descending controller and behavior resolution logic.
 - [x] Verify and fix the macOS fly-world app so the desktop demo build works cleanly.
 - [x] Refresh viewer/docs copy to describe brain-driven fallback motion instead of the old demo walk.
+- [x] Add macOS mouse controls for orbit, pan, and zoom in the fly-world viewer.
+- [x] Add unit tests for macOS camera interaction math and update viewer instructions.
