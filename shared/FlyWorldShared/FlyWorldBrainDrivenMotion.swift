@@ -139,16 +139,18 @@ struct FlyWorldLegPose {
 
     var planarTipMm: SIMD2<Float> {
         SIMD2<Float>(
-            tip.x / FlyWorldLegKinematics.sceneMillimeterScale,
-            -tip.z / FlyWorldLegKinematics.sceneMillimeterScale
+            tip.x * FlyWorldLegKinematics.flyGeometryScale / FlyWorldLegKinematics.sceneMillimeterScale,
+            -tip.z * FlyWorldLegKinematics.flyGeometryScale / FlyWorldLegKinematics.sceneMillimeterScale
         )
     }
 }
 
 enum FlyWorldLegKinematics {
     static let sceneMillimeterScale: Float = 0.12
-    static let flyRootVerticalBiasScene: Float = 0.02
+    static let flyGeometryScale: Float = 0.60
+    static let flyRootVerticalBiasScene: Float = 0.02 * flyGeometryScale
     static let arenaFloorSceneY: Float = -0.34
+    static let arenaRadiusScene: Float = 0.52
 
     private static let arenaFloorMm = arenaFloorSceneY / sceneMillimeterScale
     private static let flyRootVerticalBiasMm = flyRootVerticalBiasScene / sceneMillimeterScale
@@ -293,7 +295,7 @@ enum FlyWorldLegKinematics {
 
         let averageTipSceneY =
             effectivePoses.reduce(0.0) { partialResult, pose in
-                partialResult + pose.tip.y
+                partialResult + pose.tip.y * flyGeometryScale
             } / Float(effectivePoses.count)
 
         return arenaFloorMm - flyRootVerticalBiasMm - averageTipSceneY / sceneMillimeterScale

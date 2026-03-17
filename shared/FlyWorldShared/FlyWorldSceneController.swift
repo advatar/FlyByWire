@@ -450,7 +450,7 @@ final class FlyWorldSceneController {
 
     private func buildArena() {
         let floor = ModelEntity(
-            mesh: .generateCylinder(height: 0.008, radius: 0.52),
+            mesh: .generateCylinder(height: 0.008, radius: FlyWorldLegKinematics.arenaRadiusScene),
             materials: [SimpleMaterial(color: FlyWorldEntityFactory.color(0.64, 0.58, 0.42), roughness: 0.98, isMetallic: false)]
         )
         floor.position = SIMD3<Float>(0.0, floorY, 0.0)
@@ -598,6 +598,7 @@ private enum FlyWorldEntityFactory {
         let flyRoot = Entity()
         flyRoot.name = "WholeFly"
         flyRoot.position = SIMD3<Float>(0.0, FlyWorldLegKinematics.flyRootVerticalBiasScene, 0.0)
+        flyRoot.scale = SIMD3<Float>(repeating: FlyWorldLegKinematics.flyGeometryScale)
         flyRoot.orientation =
             simd_quatf(angle: -Float.pi / 7.0, axis: SIMD3<Float>(0.0, 1.0, 0.0)) *
             simd_quatf(angle: Float.pi / 22.0, axis: SIMD3<Float>(0.0, 0.0, 1.0))

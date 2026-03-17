@@ -97,7 +97,7 @@ final class FlyWorldBrainDrivenMotionTests: XCTestCase {
         let supportingFeet = makeLegPoses(from: frame, packet: packet).filter(\.isInContact)
         let supportAverageY =
             supportingFeet.reduce(0.0) { partialResult, pose in
-                partialResult + frame.rootPositionMm.z * FlyWorldLegKinematics.sceneMillimeterScale + FlyWorldLegKinematics.flyRootVerticalBiasScene + pose.tip.y
+                partialResult + frame.rootPositionMm.z * FlyWorldLegKinematics.sceneMillimeterScale + FlyWorldLegKinematics.flyRootVerticalBiasScene + pose.tip.y * FlyWorldLegKinematics.flyGeometryScale
             } / Float(supportingFeet.count)
 
         XCTAssertFalse(supportingFeet.isEmpty)
@@ -142,6 +142,14 @@ final class FlyWorldBrainDrivenMotionTests: XCTestCase {
 
         XCTAssertEqual(earlySupport, [.rightFront, .leftMid, .rightHind])
         XCTAssertEqual(oppositeSupport, [.leftFront, .rightMid, .leftHind])
+    }
+
+    func testDefaultFlyScaleLeavesArenaMargin() {
+        let bodyHalfLengthScene = 0.51 * FlyWorldLegKinematics.flyGeometryScale
+        let bodyHalfWidthScene = 0.27 * FlyWorldLegKinematics.flyGeometryScale
+
+        XCTAssertLessThan(bodyHalfLengthScene, FlyWorldLegKinematics.arenaRadiusScene * 0.72)
+        XCTAssertLessThan(bodyHalfWidthScene, FlyWorldLegKinematics.arenaRadiusScene * 0.55)
     }
 
     func testIdleBrainDrivenMotionDoesNotDrift() {
