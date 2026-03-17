@@ -1,0 +1,399 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2B97AF51DA022DE25EE15680 /* FlyBrainWorldMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96171595F130224E40302E4E /* FlyBrainWorldMacApp.swift */; };
+		3823B5C5502AA6CF83930E6C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E231E66A4958C532C2C010 /* ContentView.swift */; };
+		4DAA8CE63909B4CF7E596253 /* sample_vision_pro_pose_packet.json in Resources */ = {isa = PBXBuildFile; fileRef = FD7BF052624DA74BCE999B08 /* sample_vision_pro_pose_packet.json */; };
+		6D8C32E6A9EA951AD623B4BC /* vision_pro_pose_schema.json in Resources */ = {isa = PBXBuildFile; fileRef = 8C90FF0946614FB330D48741 /* vision_pro_pose_schema.json */; };
+		AC48C68759CDFB301CD1F360 /* flybrain_for_vision_pro.json in Resources */ = {isa = PBXBuildFile; fileRef = 990253EFDCD66DDA7D445072 /* flybrain_for_vision_pro.json */; };
+		B26BC655CF58DCA198D42EE9 /* FlyWorldGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25CBCC64C4967782E70F62A9 /* FlyWorldGraph.swift */; };
+		E961B86F540DE61E7F6A97CF /* FlyWorldPosePacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65998D55F5B87DF1B268FE1B /* FlyWorldPosePacket.swift */; };
+		F11252FCE5D98334F895E647 /* FlyWorldSceneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 904B2962A42FDD64E71800A0 /* FlyWorldSceneController.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		12E231E66A4958C532C2C010 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		25CBCC64C4967782E70F62A9 /* FlyWorldGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldGraph.swift; sourceTree = "<group>"; };
+		65998D55F5B87DF1B268FE1B /* FlyWorldPosePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldPosePacket.swift; sourceTree = "<group>"; };
+		8C90FF0946614FB330D48741 /* vision_pro_pose_schema.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = vision_pro_pose_schema.json; sourceTree = "<group>"; };
+		904B2962A42FDD64E71800A0 /* FlyWorldSceneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldSceneController.swift; sourceTree = "<group>"; };
+		96171595F130224E40302E4E /* FlyBrainWorldMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyBrainWorldMacApp.swift; sourceTree = "<group>"; };
+		990253EFDCD66DDA7D445072 /* flybrain_for_vision_pro.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = flybrain_for_vision_pro.json; sourceTree = "<group>"; };
+		C5B49EE96D3FCFE56C600533 /* FlyBrainWorldMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlyBrainWorldMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FD7BF052624DA74BCE999B08 /* sample_vision_pro_pose_packet.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sample_vision_pro_pose_packet.json; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0115C57207F2EE326197DB2F /* FlyWorldShared */ = {
+			isa = PBXGroup;
+			children = (
+				25CBCC64C4967782E70F62A9 /* FlyWorldGraph.swift */,
+				65998D55F5B87DF1B268FE1B /* FlyWorldPosePacket.swift */,
+				904B2962A42FDD64E71800A0 /* FlyWorldSceneController.swift */,
+			);
+			path = FlyWorldShared;
+			sourceTree = "<group>";
+		};
+		2BEEC0F19171DCEFF13D19FC /* fly-brain */ = {
+			isa = PBXGroup;
+			children = (
+				60D76B24738A769A4135F394 /* shared */,
+				FEE87441C48FD27E0598B97C /* vision-pro */,
+			);
+			name = "fly-brain";
+			path = ../..;
+			sourceTree = "<group>";
+		};
+		3C992B9CA7FEEB343B051923 /* FlyBrainWorldMac */ = {
+			isa = PBXGroup;
+			children = (
+				6938F7A2D2C949AD30C23EC4 /* Sources */,
+			);
+			path = FlyBrainWorldMac;
+			sourceTree = "<group>";
+		};
+		3D8F146308FD132272567D30 /* FlyBrainVision */ = {
+			isa = PBXGroup;
+			children = (
+				970410A233843F034084203C /* Resources */,
+			);
+			path = FlyBrainVision;
+			sourceTree = "<group>";
+		};
+		40F313DBA98963A1B55D5C03 /* FlyWorldSharedResources */ = {
+			isa = PBXGroup;
+			children = (
+				FD7BF052624DA74BCE999B08 /* sample_vision_pro_pose_packet.json */,
+				8C90FF0946614FB330D48741 /* vision_pro_pose_schema.json */,
+			);
+			path = FlyWorldSharedResources;
+			sourceTree = "<group>";
+		};
+		547D28B9BC00B8A8F16BB74A /* FlyBrainVision */ = {
+			isa = PBXGroup;
+			children = (
+				3D8F146308FD132272567D30 /* FlyBrainVision */,
+			);
+			path = FlyBrainVision;
+			sourceTree = "<group>";
+		};
+		60D76B24738A769A4135F394 /* shared */ = {
+			isa = PBXGroup;
+			children = (
+				0115C57207F2EE326197DB2F /* FlyWorldShared */,
+				40F313DBA98963A1B55D5C03 /* FlyWorldSharedResources */,
+			);
+			path = shared;
+			sourceTree = "<group>";
+		};
+		6938F7A2D2C949AD30C23EC4 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				12E231E66A4958C532C2C010 /* ContentView.swift */,
+				96171595F130224E40302E4E /* FlyBrainWorldMacApp.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		76F084FF02A47C5102B43612 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C5B49EE96D3FCFE56C600533 /* FlyBrainWorldMac.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		970410A233843F034084203C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				990253EFDCD66DDA7D445072 /* flybrain_for_vision_pro.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		C24318D12697461542BF1952 = {
+			isa = PBXGroup;
+			children = (
+				2BEEC0F19171DCEFF13D19FC /* fly-brain */,
+				3C992B9CA7FEEB343B051923 /* FlyBrainWorldMac */,
+				76F084FF02A47C5102B43612 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FEE87441C48FD27E0598B97C /* vision-pro */ = {
+			isa = PBXGroup;
+			children = (
+				547D28B9BC00B8A8F16BB74A /* FlyBrainVision */,
+			);
+			path = "vision-pro";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DC9659372A4F8CC230AC0179 /* FlyBrainWorldMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 583501BE0114C02268516AFF /* Build configuration list for PBXNativeTarget "FlyBrainWorldMac" */;
+			buildPhases = (
+				79B20C8969269F31DA318620 /* Sources */,
+				BD3601D9FEC974C52ACDC704 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FlyBrainWorldMac;
+			packageProductDependencies = (
+			);
+			productName = FlyBrainWorldMac;
+			productReference = C5B49EE96D3FCFE56C600533 /* FlyBrainWorldMac.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D4AFA01D22C35340D7EF8C3A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					DC9659372A4F8CC230AC0179 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = A0301EFCE5D10A4C39D15050 /* Build configuration list for PBXProject "FlyBrainWorldMac" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = C24318D12697461542BF1952;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DC9659372A4F8CC230AC0179 /* FlyBrainWorldMac */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		BD3601D9FEC974C52ACDC704 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC48C68759CDFB301CD1F360 /* flybrain_for_vision_pro.json in Resources */,
+				4DAA8CE63909B4CF7E596253 /* sample_vision_pro_pose_packet.json in Resources */,
+				6D8C32E6A9EA951AD623B4BC /* vision_pro_pose_schema.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		79B20C8969269F31DA318620 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3823B5C5502AA6CF83930E6C /* ContentView.swift in Sources */,
+				2B97AF51DA022DE25EE15680 /* FlyBrainWorldMacApp.swift in Sources */,
+				B26BC655CF58DCA198D42EE9 /* FlyWorldGraph.swift in Sources */,
+				E961B86F540DE61E7F6A97CF /* FlyWorldPosePacket.swift in Sources */,
+				F11252FCE5D98334F895E647 /* FlyWorldSceneController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0B2DE71CF892BDCA4E8E57A2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.advatar.flybrain.worldmac;
+				PRODUCT_NAME = FlyBrainWorldMac;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		3D9EA7BE99B1F9BCE44A66BB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.advatar.flybrain.worldmac;
+				PRODUCT_NAME = FlyBrainWorldMac;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		D74FE8CF053CD4655A03635F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E1221EE0ADC3F334E57331C3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		583501BE0114C02268516AFF /* Build configuration list for PBXNativeTarget "FlyBrainWorldMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D74FE8CF053CD4655A03635F /* Debug */,
+				E1221EE0ADC3F334E57331C3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A0301EFCE5D10A4C39D15050 /* Build configuration list for PBXProject "FlyBrainWorldMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3D9EA7BE99B1F9BCE44A66BB /* Debug */,
+				0B2DE71CF892BDCA4E8E57A2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = D4AFA01D22C35340D7EF8C3A /* Project object */;
+}

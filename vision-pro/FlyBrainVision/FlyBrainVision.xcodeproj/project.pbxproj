@@ -1,0 +1,433 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1BB5BFD81BBE5BB7470F6437 /* FlyWireMeshes.json in Resources */ = {isa = PBXBuildFile; fileRef = 6C72265EB070B59DCAE0B32A /* FlyWireMeshes.json */; };
+		218F549ECDA331B0AC911F65 /* ConnectivityBackbone.json in Resources */ = {isa = PBXBuildFile; fileRef = 2A701F59F08642CF2832EDE8 /* ConnectivityBackbone.json */; };
+		37D73660B6F86EED091946CF /* WholeFlyGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C9900FA2675DC30162FD13 /* WholeFlyGraph.swift */; };
+		4751BB4395263B62820786BB /* BrainViewerSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 894053C8B95B9D59392D3652 /* BrainViewerSettings.swift */; };
+		4C530A9491F3EA8628319CEE /* flybrain_for_vision_pro.json in Resources */ = {isa = PBXBuildFile; fileRef = 618ACB2CB9577B03C1E24527 /* flybrain_for_vision_pro.json */; };
+		4F2769380C2B870F74604540 /* vision_pro_pose_schema.json in Resources */ = {isa = PBXBuildFile; fileRef = 84CACEDB5939296376A2ACBD /* vision_pro_pose_schema.json */; };
+		6762027AC4555DBAF78A8F8B /* ConnectomeBackbone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 755BCA1503184B3F7922568C /* ConnectomeBackbone.swift */; };
+		6A45C84F22469668CE20C6C4 /* BrainSceneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95E15F57F6EE8E50BF45F797 /* BrainSceneController.swift */; };
+		6EA13DCCE7C12034D63205B7 /* BrainMeshFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4693F0BABED59EC703EE33DA /* BrainMeshFactory.swift */; };
+		7BB0F77CBECB7201C049CEDF /* MeshCollectionAsset.swift in Sources */ = {isa = PBXBuildFile; fileRef = C93DAE787C715B0E98629781 /* MeshCollectionAsset.swift */; };
+		7E172B6DD80883038AD7ABB6 /* WholeFlyFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 406EFE5030B0A9DF8A4CA7C8 /* WholeFlyFactory.swift */; };
+		8A4162F460F429AB55854215 /* AtlasMesh.json in Resources */ = {isa = PBXBuildFile; fileRef = A5CE7CA95196464AC4056D2E /* AtlasMesh.json */; };
+		9B054F69EDE4D3F6D858F0AA /* FlyWorldSceneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C626F7BDA1A9311D723550 /* FlyWorldSceneController.swift */; };
+		A0A82F5DBD6C14576468A712 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AD1BFF3331C7189C416E483 /* ContentView.swift */; };
+		AEF17A96439232E5FACEF07A /* FlyWorldPosePacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE47EB0D6A9FCDD444B34CA2 /* FlyWorldPosePacket.swift */; };
+		B4C04F9727F6F6381554711D /* FlyWorldGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBFE0AA7D1656F44745B4657 /* FlyWorldGraph.swift */; };
+		B4E42D058B5DE0C6D32933D4 /* ConnectomeGraphFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = D757EE619FEF5A9290F4B621 /* ConnectomeGraphFactory.swift */; };
+		CCCD0129898F77EB1B92CC2E /* BrainVisualizationMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC5CB7EF97F0405ECB1A313E /* BrainVisualizationMode.swift */; };
+		D09D0FB11087059844CC7405 /* FlyBrainVisionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50DA732D81184D1437DFAD5B /* FlyBrainVisionApp.swift */; };
+		D3EDA620CC46D81A3C4EC5A2 /* BundledMeshAssetFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6339059075BCB193F0733BE /* BundledMeshAssetFactory.swift */; };
+		DE709FB7B9ABD4EA7A2D82C1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4EDD727E5958DF17E8366EFF /* Assets.xcassets */; };
+		F6FF668C08C9C8608CC49CF1 /* sample_vision_pro_pose_packet.json in Resources */ = {isa = PBXBuildFile; fileRef = 86E30D7E6836DEDED5FD4843 /* sample_vision_pro_pose_packet.json */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2A701F59F08642CF2832EDE8 /* ConnectivityBackbone.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ConnectivityBackbone.json; sourceTree = "<group>"; };
+		406EFE5030B0A9DF8A4CA7C8 /* WholeFlyFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WholeFlyFactory.swift; sourceTree = "<group>"; };
+		4693F0BABED59EC703EE33DA /* BrainMeshFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrainMeshFactory.swift; sourceTree = "<group>"; };
+		4AD1BFF3331C7189C416E483 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		4EDD727E5958DF17E8366EFF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		50DA732D81184D1437DFAD5B /* FlyBrainVisionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyBrainVisionApp.swift; sourceTree = "<group>"; };
+		618ACB2CB9577B03C1E24527 /* flybrain_for_vision_pro.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = flybrain_for_vision_pro.json; sourceTree = "<group>"; };
+		6C72265EB070B59DCAE0B32A /* FlyWireMeshes.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = FlyWireMeshes.json; sourceTree = "<group>"; };
+		70C626F7BDA1A9311D723550 /* FlyWorldSceneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldSceneController.swift; sourceTree = "<group>"; };
+		73C9900FA2675DC30162FD13 /* WholeFlyGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WholeFlyGraph.swift; sourceTree = "<group>"; };
+		755BCA1503184B3F7922568C /* ConnectomeBackbone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectomeBackbone.swift; sourceTree = "<group>"; };
+		84CACEDB5939296376A2ACBD /* vision_pro_pose_schema.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = vision_pro_pose_schema.json; sourceTree = "<group>"; };
+		850D476EE0DADB603BB65236 /* FlyBrainVision.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FlyBrainVision.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		86E30D7E6836DEDED5FD4843 /* sample_vision_pro_pose_packet.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sample_vision_pro_pose_packet.json; sourceTree = "<group>"; };
+		894053C8B95B9D59392D3652 /* BrainViewerSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrainViewerSettings.swift; sourceTree = "<group>"; };
+		95E15F57F6EE8E50BF45F797 /* BrainSceneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrainSceneController.swift; sourceTree = "<group>"; };
+		A5CE7CA95196464AC4056D2E /* AtlasMesh.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = AtlasMesh.json; sourceTree = "<group>"; };
+		AE47EB0D6A9FCDD444B34CA2 /* FlyWorldPosePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldPosePacket.swift; sourceTree = "<group>"; };
+		B6339059075BCB193F0733BE /* BundledMeshAssetFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledMeshAssetFactory.swift; sourceTree = "<group>"; };
+		C93DAE787C715B0E98629781 /* MeshCollectionAsset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshCollectionAsset.swift; sourceTree = "<group>"; };
+		CC5CB7EF97F0405ECB1A313E /* BrainVisualizationMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrainVisualizationMode.swift; sourceTree = "<group>"; };
+		D757EE619FEF5A9290F4B621 /* ConnectomeGraphFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectomeGraphFactory.swift; sourceTree = "<group>"; };
+		DBFE0AA7D1656F44745B4657 /* FlyWorldGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldGraph.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0548B0C788FBB69960A9C83E /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				4EDD727E5958DF17E8366EFF /* Assets.xcassets */,
+				A5CE7CA95196464AC4056D2E /* AtlasMesh.json */,
+				2A701F59F08642CF2832EDE8 /* ConnectivityBackbone.json */,
+				618ACB2CB9577B03C1E24527 /* flybrain_for_vision_pro.json */,
+				6C72265EB070B59DCAE0B32A /* FlyWireMeshes.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		153515098C2A320C170A381C /* shared */ = {
+			isa = PBXGroup;
+			children = (
+				8B7AB4ECF766DC1F261CC11D /* FlyWorldShared */,
+				BED819DD9D28EC7889C5961F /* FlyWorldSharedResources */,
+			);
+			path = shared;
+			sourceTree = "<group>";
+		};
+		4E587B205D5195379DBED972 /* fly-brain */ = {
+			isa = PBXGroup;
+			children = (
+				153515098C2A320C170A381C /* shared */,
+			);
+			name = "fly-brain";
+			path = ../..;
+			sourceTree = "<group>";
+		};
+		5FD355B7DC4FF26DB21DD3E4 /* FlyBrainVision */ = {
+			isa = PBXGroup;
+			children = (
+				0548B0C788FBB69960A9C83E /* Resources */,
+				6F013667EB9C9B48600B6561 /* Sources */,
+			);
+			path = FlyBrainVision;
+			sourceTree = "<group>";
+		};
+		6F013667EB9C9B48600B6561 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				4693F0BABED59EC703EE33DA /* BrainMeshFactory.swift */,
+				95E15F57F6EE8E50BF45F797 /* BrainSceneController.swift */,
+				894053C8B95B9D59392D3652 /* BrainViewerSettings.swift */,
+				CC5CB7EF97F0405ECB1A313E /* BrainVisualizationMode.swift */,
+				B6339059075BCB193F0733BE /* BundledMeshAssetFactory.swift */,
+				755BCA1503184B3F7922568C /* ConnectomeBackbone.swift */,
+				D757EE619FEF5A9290F4B621 /* ConnectomeGraphFactory.swift */,
+				4AD1BFF3331C7189C416E483 /* ContentView.swift */,
+				50DA732D81184D1437DFAD5B /* FlyBrainVisionApp.swift */,
+				C93DAE787C715B0E98629781 /* MeshCollectionAsset.swift */,
+				406EFE5030B0A9DF8A4CA7C8 /* WholeFlyFactory.swift */,
+				73C9900FA2675DC30162FD13 /* WholeFlyGraph.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		8B7AB4ECF766DC1F261CC11D /* FlyWorldShared */ = {
+			isa = PBXGroup;
+			children = (
+				DBFE0AA7D1656F44745B4657 /* FlyWorldGraph.swift */,
+				AE47EB0D6A9FCDD444B34CA2 /* FlyWorldPosePacket.swift */,
+				70C626F7BDA1A9311D723550 /* FlyWorldSceneController.swift */,
+			);
+			path = FlyWorldShared;
+			sourceTree = "<group>";
+		};
+		BED819DD9D28EC7889C5961F /* FlyWorldSharedResources */ = {
+			isa = PBXGroup;
+			children = (
+				86E30D7E6836DEDED5FD4843 /* sample_vision_pro_pose_packet.json */,
+				84CACEDB5939296376A2ACBD /* vision_pro_pose_schema.json */,
+			);
+			path = FlyWorldSharedResources;
+			sourceTree = "<group>";
+		};
+		C500727B37EFAC9E4C2DBF85 = {
+			isa = PBXGroup;
+			children = (
+				4E587B205D5195379DBED972 /* fly-brain */,
+				5FD355B7DC4FF26DB21DD3E4 /* FlyBrainVision */,
+				F385F44C8ED0C00205FB0D07 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F385F44C8ED0C00205FB0D07 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				850D476EE0DADB603BB65236 /* FlyBrainVision.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6140449ECE8A97C73C681098 /* FlyBrainVision */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F8E0D667DFFFDDEFD3FB2A3D /* Build configuration list for PBXNativeTarget "FlyBrainVision" */;
+			buildPhases = (
+				7F54BBD69730D77E9D051FCC /* Sources */,
+				5E4752D5E2D5A2462D8D33A7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FlyBrainVision;
+			packageProductDependencies = (
+			);
+			productName = FlyBrainVision;
+			productReference = 850D476EE0DADB603BB65236 /* FlyBrainVision.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5049976B02257B9A93EBBD76 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					6140449ECE8A97C73C681098 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = AFB1C1C749FFA7BAEB81D45A /* Build configuration list for PBXProject "FlyBrainVision" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = C500727B37EFAC9E4C2DBF85;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6140449ECE8A97C73C681098 /* FlyBrainVision */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5E4752D5E2D5A2462D8D33A7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DE709FB7B9ABD4EA7A2D82C1 /* Assets.xcassets in Resources */,
+				8A4162F460F429AB55854215 /* AtlasMesh.json in Resources */,
+				218F549ECDA331B0AC911F65 /* ConnectivityBackbone.json in Resources */,
+				1BB5BFD81BBE5BB7470F6437 /* FlyWireMeshes.json in Resources */,
+				4C530A9491F3EA8628319CEE /* flybrain_for_vision_pro.json in Resources */,
+				F6FF668C08C9C8608CC49CF1 /* sample_vision_pro_pose_packet.json in Resources */,
+				4F2769380C2B870F74604540 /* vision_pro_pose_schema.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7F54BBD69730D77E9D051FCC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6EA13DCCE7C12034D63205B7 /* BrainMeshFactory.swift in Sources */,
+				6A45C84F22469668CE20C6C4 /* BrainSceneController.swift in Sources */,
+				4751BB4395263B62820786BB /* BrainViewerSettings.swift in Sources */,
+				CCCD0129898F77EB1B92CC2E /* BrainVisualizationMode.swift in Sources */,
+				D3EDA620CC46D81A3C4EC5A2 /* BundledMeshAssetFactory.swift in Sources */,
+				6762027AC4555DBAF78A8F8B /* ConnectomeBackbone.swift in Sources */,
+				B4E42D058B5DE0C6D32933D4 /* ConnectomeGraphFactory.swift in Sources */,
+				A0A82F5DBD6C14576468A712 /* ContentView.swift in Sources */,
+				D09D0FB11087059844CC7405 /* FlyBrainVisionApp.swift in Sources */,
+				B4C04F9727F6F6381554711D /* FlyWorldGraph.swift in Sources */,
+				AEF17A96439232E5FACEF07A /* FlyWorldPosePacket.swift in Sources */,
+				9B054F69EDE4D3F6D858F0AA /* FlyWorldSceneController.swift in Sources */,
+				7BB0F77CBECB7201C049CEDF /* MeshCollectionAsset.swift in Sources */,
+				7E172B6DD80883038AD7ABB6 /* WholeFlyFactory.swift in Sources */,
+				37D73660B6F86EED091946CF /* WholeFlyGraph.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		3AE123573B13DDAC79F73A75 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FlyBrainVision/Info.plist;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.advatar.flybrain.vision;
+				PRODUCT_NAME = FlyBrainVision;
+				SDKROOT = xros;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		4F7B1AB84240B3B366D8E119 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FlyBrainVision/Info.plist;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.advatar.flybrain.vision;
+				PRODUCT_NAME = FlyBrainVision;
+				SDKROOT = xros;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		BB1518CCF70686D608FCADBD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				SDKROOT = xros;
+				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 2.0;
+			};
+			name = Debug;
+		};
+		ED52A6A5BC0F74B18E47DD5C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				SDKROOT = xros;
+				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 2.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AFB1C1C749FFA7BAEB81D45A /* Build configuration list for PBXProject "FlyBrainVision" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4F7B1AB84240B3B366D8E119 /* Debug */,
+				3AE123573B13DDAC79F73A75 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F8E0D667DFFFDDEFD3FB2A3D /* Build configuration list for PBXNativeTarget "FlyBrainVision" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB1518CCF70686D608FCADBD /* Debug */,
+				ED52A6A5BC0F74B18E47DD5C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5049976B02257B9A93EBBD76 /* Project object */;
+}

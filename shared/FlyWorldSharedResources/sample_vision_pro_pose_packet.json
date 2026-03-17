@@ -1,0 +1,60 @@
+{
+  "timestamp": 1742210200.0,
+  "root_position_mm": [0.8, 0.3, 0.2],
+  "root_quaternion_xyzw": [0.0, 0.08, 0.0, 0.9968],
+  "joint_angles_rad": {
+    "LFCoxa": 0.18,
+    "LFFemur": -0.24,
+    "LFTibia": 0.31,
+    "RFCoxa": -0.14,
+    "RFFemur": -0.19,
+    "RFTibia": 0.27
+  },
+  "brain_state": {
+    "DNa01": 0.22,
+    "DNa02": 0.11,
+    "oDN1": 0.55,
+    "aDN1": 0.05,
+    "MN9": 0.0,
+    "loom_escape": 0.0
+  },
+  "behavior": "walk",
+  "world_objects": [
+    {
+      "id": "sugar-bowl",
+      "kind": "food",
+      "label": "Sugar",
+      "position_mm": [4.8, -1.8, 0.0],
+      "size_mm": [1.8, 0.8, 1.8],
+      "color": [0.98, 0.78, 0.26],
+      "opacity": 0.82
+    },
+    {
+      "id": "odor-source",
+      "kind": "odor",
+      "label": "Odor",
+      "position_mm": [-4.2, 2.0, 0.4],
+      "size_mm": [2.4, 2.4, 2.4],
+      "color": [0.24, 0.84, 0.74],
+      "opacity": 0.16
+    },
+    {
+      "id": "visual-target",
+      "kind": "visual_target",
+      "label": "Target",
+      "position_mm": [1.6, 4.5, 1.2],
+      "size_mm": [1.4, 1.4, 1.4],
+      "color": [1.0, 0.22, 0.18],
+      "opacity": 0.92
+    },
+    {
+      "id": "obstacle",
+      "kind": "obstacle",
+      "label": "Obstacle",
+      "position_mm": [-1.8, -3.8, 0.0],
+      "size_mm": [2.4, 1.2, 1.8],
+      "color": [0.46, 0.50, 0.56],
+      "opacity": 0.76
+    }
+  ]
+}

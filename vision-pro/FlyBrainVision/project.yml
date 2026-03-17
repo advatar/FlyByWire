@@ -1,0 +1,28 @@
+name: FlyBrainVision
+options:
+  createIntermediateGroups: true
+settings:
+  base:
+    PRODUCT_NAME: FlyBrainVision
+    PRODUCT_BUNDLE_IDENTIFIER: com.advatar.flybrain.vision
+    MARKETING_VERSION: 1.0
+    CURRENT_PROJECT_VERSION: 1
+    SWIFT_VERSION: 6.0
+    GENERATE_INFOPLIST_FILE: NO
+    INFOPLIST_FILE: FlyBrainVision/Info.plist
+    CODE_SIGN_STYLE: Automatic
+targets:
+  FlyBrainVision:
+    type: application
+    platform: visionOS
+    deploymentTarget: "2.0"
+    sources:
+      - path: FlyBrainVision/Sources
+      - path: ../../shared/FlyWorldShared
+      - path: FlyBrainVision/Resources
+        buildPhase: resources
+      - path: ../../shared/FlyWorldSharedResources
+        buildPhase: resources
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: 7

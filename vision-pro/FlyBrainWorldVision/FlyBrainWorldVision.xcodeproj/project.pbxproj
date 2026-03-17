@@ -1,0 +1,407 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		115212DB5784EEBED38647FE /* FlyWorldSceneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 659691E462162AA05279DA9B /* FlyWorldSceneController.swift */; };
+		129BF604F7E7EA876BAC8CD9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5FD36CB402EAD9E3F4F5974 /* ContentView.swift */; };
+		176B2393BAA86791678970F9 /* flybrain_for_vision_pro.json in Resources */ = {isa = PBXBuildFile; fileRef = 8618E2FA8962471B432161AF /* flybrain_for_vision_pro.json */; };
+		26AE408A8C387E4C342AA716 /* FlyBrainWorldVisionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBCDDAC7233142FA313EF3E /* FlyBrainWorldVisionApp.swift */; };
+		495817836E1BA1A4414F13C4 /* FlyWorldGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1D3EFDB55D2237C4772C423 /* FlyWorldGraph.swift */; };
+		73114EC298FC8E746B3E510C /* vision_pro_pose_schema.json in Resources */ = {isa = PBXBuildFile; fileRef = 024F3FCD0DA5057BC1FCD5AC /* vision_pro_pose_schema.json */; };
+		9255EF6CDE29A2BCB36A5CB5 /* FlyWorldViewerSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E9A6B6008B33AD47204C1F9 /* FlyWorldViewerSettings.swift */; };
+		A67B53C79446B11F4BBB4CBE /* FlyWorldPosePacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = E450B14F1CDFF5284EA34A91 /* FlyWorldPosePacket.swift */; };
+		B0E0073CEDA4C4FC260AC864 /* sample_vision_pro_pose_packet.json in Resources */ = {isa = PBXBuildFile; fileRef = 0B6E645CD5C6FCEE9C508EAE /* sample_vision_pro_pose_packet.json */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		024F3FCD0DA5057BC1FCD5AC /* vision_pro_pose_schema.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = vision_pro_pose_schema.json; sourceTree = "<group>"; };
+		0B6E645CD5C6FCEE9C508EAE /* sample_vision_pro_pose_packet.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sample_vision_pro_pose_packet.json; sourceTree = "<group>"; };
+		4E9A6B6008B33AD47204C1F9 /* FlyWorldViewerSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldViewerSettings.swift; sourceTree = "<group>"; };
+		659691E462162AA05279DA9B /* FlyWorldSceneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldSceneController.swift; sourceTree = "<group>"; };
+		7F65D45043D04A7D37D84FF6 /* FlyBrainWorldVision.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FlyBrainWorldVision.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8618E2FA8962471B432161AF /* flybrain_for_vision_pro.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = flybrain_for_vision_pro.json; sourceTree = "<group>"; };
+		ACBCDDAC7233142FA313EF3E /* FlyBrainWorldVisionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyBrainWorldVisionApp.swift; sourceTree = "<group>"; };
+		D1D3EFDB55D2237C4772C423 /* FlyWorldGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldGraph.swift; sourceTree = "<group>"; };
+		E450B14F1CDFF5284EA34A91 /* FlyWorldPosePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldPosePacket.swift; sourceTree = "<group>"; };
+		E5FD36CB402EAD9E3F4F5974 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		054FD0B696A32525D038BAA7 /* FlyBrainWorldVision */ = {
+			isa = PBXGroup;
+			children = (
+				716C50A5CA2947035E3AF0A6 /* Sources */,
+			);
+			path = FlyBrainWorldVision;
+			sourceTree = "<group>";
+		};
+		2D819ED4611DBC69E463A8CB /* FlyBrainVision */ = {
+			isa = PBXGroup;
+			children = (
+				70E7300860E0A03BC54B833F /* Resources */,
+			);
+			path = FlyBrainVision;
+			sourceTree = "<group>";
+		};
+		4037ACEB0AAFB0BF1FFCC012 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7F65D45043D04A7D37D84FF6 /* FlyBrainWorldVision.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		619E75957121A0F3EE6625A9 /* FlyBrainVision */ = {
+			isa = PBXGroup;
+			children = (
+				2D819ED4611DBC69E463A8CB /* FlyBrainVision */,
+			);
+			path = FlyBrainVision;
+			sourceTree = "<group>";
+		};
+		70E7300860E0A03BC54B833F /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8618E2FA8962471B432161AF /* flybrain_for_vision_pro.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		70F175434A648D28A489CE11 /* FlyWorldShared */ = {
+			isa = PBXGroup;
+			children = (
+				D1D3EFDB55D2237C4772C423 /* FlyWorldGraph.swift */,
+				E450B14F1CDFF5284EA34A91 /* FlyWorldPosePacket.swift */,
+				659691E462162AA05279DA9B /* FlyWorldSceneController.swift */,
+			);
+			path = FlyWorldShared;
+			sourceTree = "<group>";
+		};
+		716C50A5CA2947035E3AF0A6 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				E5FD36CB402EAD9E3F4F5974 /* ContentView.swift */,
+				ACBCDDAC7233142FA313EF3E /* FlyBrainWorldVisionApp.swift */,
+				4E9A6B6008B33AD47204C1F9 /* FlyWorldViewerSettings.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		8379631DA051033922F8A37E /* FlyWorldSharedResources */ = {
+			isa = PBXGroup;
+			children = (
+				0B6E645CD5C6FCEE9C508EAE /* sample_vision_pro_pose_packet.json */,
+				024F3FCD0DA5057BC1FCD5AC /* vision_pro_pose_schema.json */,
+			);
+			path = FlyWorldSharedResources;
+			sourceTree = "<group>";
+		};
+		C3BA498ED9212C66C8226A61 /* fly-brain */ = {
+			isa = PBXGroup;
+			children = (
+				E6CE0C4903936BCB4C5AB9FC /* shared */,
+				CEFBFB5F0D722BDC235CC532 /* vision-pro */,
+			);
+			name = "fly-brain";
+			path = ../..;
+			sourceTree = "<group>";
+		};
+		CEFBFB5F0D722BDC235CC532 /* vision-pro */ = {
+			isa = PBXGroup;
+			children = (
+				619E75957121A0F3EE6625A9 /* FlyBrainVision */,
+			);
+			name = "vision-pro";
+			path = ..;
+			sourceTree = "<group>";
+		};
+		E6CE0C4903936BCB4C5AB9FC /* shared */ = {
+			isa = PBXGroup;
+			children = (
+				70F175434A648D28A489CE11 /* FlyWorldShared */,
+				8379631DA051033922F8A37E /* FlyWorldSharedResources */,
+			);
+			path = shared;
+			sourceTree = "<group>";
+		};
+		EB166FEFD4C9B4BE52B5B9B8 = {
+			isa = PBXGroup;
+			children = (
+				C3BA498ED9212C66C8226A61 /* fly-brain */,
+				054FD0B696A32525D038BAA7 /* FlyBrainWorldVision */,
+				CEFBFB5F0D722BDC235CC532 /* vision-pro */,
+				4037ACEB0AAFB0BF1FFCC012 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		63A51BD608EC3A43C0E6BCFF /* FlyBrainWorldVision */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7F7E1CE70017143248902957 /* Build configuration list for PBXNativeTarget "FlyBrainWorldVision" */;
+			buildPhases = (
+				F4A9C516D9D9A34972C3E33C /* Sources */,
+				876AD2338A591AF92B5D1354 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FlyBrainWorldVision;
+			packageProductDependencies = (
+			);
+			productName = FlyBrainWorldVision;
+			productReference = 7F65D45043D04A7D37D84FF6 /* FlyBrainWorldVision.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4EFC5B3744ADEFC0221F3733 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					63A51BD608EC3A43C0E6BCFF = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 557D4EED71446374411D3989 /* Build configuration list for PBXProject "FlyBrainWorldVision" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = EB166FEFD4C9B4BE52B5B9B8;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				63A51BD608EC3A43C0E6BCFF /* FlyBrainWorldVision */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		876AD2338A591AF92B5D1354 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				176B2393BAA86791678970F9 /* flybrain_for_vision_pro.json in Resources */,
+				B0E0073CEDA4C4FC260AC864 /* sample_vision_pro_pose_packet.json in Resources */,
+				73114EC298FC8E746B3E510C /* vision_pro_pose_schema.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F4A9C516D9D9A34972C3E33C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				129BF604F7E7EA876BAC8CD9 /* ContentView.swift in Sources */,
+				26AE408A8C387E4C342AA716 /* FlyBrainWorldVisionApp.swift in Sources */,
+				495817836E1BA1A4414F13C4 /* FlyWorldGraph.swift in Sources */,
+				A67B53C79446B11F4BBB4CBE /* FlyWorldPosePacket.swift in Sources */,
+				115212DB5784EEBED38647FE /* FlyWorldSceneController.swift in Sources */,
+				9255EF6CDE29A2BCB36A5CB5 /* FlyWorldViewerSettings.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0569560882E0DFA95A458885 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				SDKROOT = xros;
+				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 2.0;
+			};
+			name = Debug;
+		};
+		20FE1613090E7D82AB224771 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FlyBrainWorldVision/Info.plist;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.advatar.flybrain.worldvision;
+				PRODUCT_NAME = FlyBrainWorldVision;
+				SDKROOT = xros;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		EBAD2FC3243BBFEAF11C52E0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				SDKROOT = xros;
+				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 2.0;
+			};
+			name = Release;
+		};
+		FE4B0C89973CF29A08324959 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FlyBrainWorldVision/Info.plist;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.advatar.flybrain.worldvision;
+				PRODUCT_NAME = FlyBrainWorldVision;
+				SDKROOT = xros;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		557D4EED71446374411D3989 /* Build configuration list for PBXProject "FlyBrainWorldVision" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE4B0C89973CF29A08324959 /* Debug */,
+				20FE1613090E7D82AB224771 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7F7E1CE70017143248902957 /* Build configuration list for PBXNativeTarget "FlyBrainWorldVision" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0569560882E0DFA95A458885 /* Debug */,
+				EBAD2FC3243BBFEAF11C52E0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4EFC5B3744ADEFC0221F3733 /* Project object */;
+}

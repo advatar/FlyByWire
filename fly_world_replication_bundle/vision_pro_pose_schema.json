@@ -1,0 +1,22 @@
+{
+  "timestamp": 0.0,
+  "root_position_mm": [0.0, 0.0, 0.2],
+  "root_quaternion_xyzw": [0.0, 0.0, 0.0, 1.0],
+  "joint_angles_rad": {
+    "LFCoxa": 0.0,
+    "LFFemur": 0.0,
+    "LFTibia": 0.0,
+    "RFCoxa": 0.0,
+    "RFFemur": 0.0,
+    "RFTibia": 0.0
+  },
+  "brain_state": {
+    "DNa01": 0.0,
+    "DNa02": 0.0,
+    "oDN1": 0.0,
+    "aDN1": 0.0,
+    "MN9": 0.0,
+    "loom_escape": 0.0
+  },
+  "behavior": "walk"
+}

@@ -1,0 +1,31 @@
+__pycache__
+*.egg-info
+.DS_Store
+*.pyc
+
+# Brian2/Brian2CUDA generated standalone code
+code/output*
+
+# Simulation results (large parquet files)
+data/results
+
+# PyTorch cached weight matrices (generated from connectivity data)
+data/weight_coo.pkl
+data/weight_csr.pkl
+
+# Local tooling for the Vision Pro graph asset pipeline
+vision-pro/FlyBrainVision/.venv
+
+# Local Xcode and Swift build output
+.build/
+DerivedData/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+**/xcuserdata/
+vision-pro/FlyBrainVision/.derivedData/
+vision-pro/FlyBrainVision/.derivedData-device/
+
+# Local virtual environments
+.venv/
+venv/
