@@ -25,3 +25,4 @@
 - [x] Add a real embodied FlyGym/MuJoCo simulation runner that drives the existing pose-packet stream from connectome outputs.
 - [x] Update the shared viewer pipeline so live pose packets can use direct leg-joint data instead of only the fallback gait synthesis.
 - [x] Add regression tests and docs for the embodied simulation bridge and direct-pose playback path.
+- [x] Commit and push the outstanding FlyBrainVision Xcode project configuration updates.
