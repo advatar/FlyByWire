@@ -40,6 +40,17 @@ The pose/world stream uses these packet names:
 
 If no external packet exists, the bundled sample packet and arena objects are used, and the fly moves from the packet's brain-state channels through the shared fallback locomotion/feeding controller with grounded body support from stance-leg contacts.
 
+To stream a live embodied simulation packet into the app:
+
+```bash
+cd ../..
+python main.py --embodied --packet-path ~/Documents/vision_pro_pose_packet.json --real-time
+```
+
+When the packet includes canonical leg joint keys such as `LFCoxa`, `LFFemur`,
+and `LFTibia`, the viewer uses direct leg-joint playback. Legs without direct
+angles still fall back to the shared synthesized gait.
+
 ## Viewer Controls
 
 - Drag with the mouse to orbit around the fly.

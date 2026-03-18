@@ -48,18 +48,52 @@ Results are incrementally saved to `data/benchmark-results.csv` as each
 benchmark completes, with separate columns for setup time (loading, compilation)
 and simulation time (the always-on cost).
 
+## Embodied Simulation
+
+The repo also includes a closed-loop embodied bridge that:
+
+- reads sensory drive from a small task arena,
+- steps the FlyWire-derived connectome online,
+- decodes descending outputs into locomotion commands,
+- drives a FlyGym / NeuroMechFly body in MuJoCo, and
+- writes the same pose packet consumed by the macOS and visionOS viewers.
+
+Run the full simulation with the real connectome and FlyGym world:
+
+```bash
+python main.py --embodied --steps 240 --real-time
+```
+
+Useful variants:
+
+```bash
+# Explicit packet output path
+python main.py --embodied --packet-path ~/vision_pro_pose_packet.json
+
+# Development fallback without FlyGym / MuJoCo
+python main.py --embodied --brain surrogate --world mock --steps 240
+```
+
+The embodied runner lives in `code/embodied_simulation.py`. It writes canonical
+leg joint angles (`LFCoxa`, `LFFemur`, `LFTibia`, etc.) so the shared viewers can
+play back direct joint poses instead of only synthesizing a fallback gait.
+
 ## Installation
 
 ### Conda environment
 
 The `brain-fly` conda environment provides everything needed to run the
-**Brian2**, **Brian2CUDA**, and **PyTorch** backends (including CUDA-enabled
-PyTorch):
+**Brian2**, **Brian2CUDA**, **PyTorch**, and the embodied FlyGym / MuJoCo bridge
+(including CUDA-enabled PyTorch):
 
 ```bash
 conda env create -f environment.yml
 conda activate brain-fly
 ```
+
+If you are using a custom Python instead of the repo environment, keep `numpy`
+on the 1.x series for the `pandas` / `pyarrow` stack used by the connectome
+runner.
 
 ### NEST GPU
 
@@ -126,6 +160,9 @@ runs everything.
 conda env create -f environment.yml
 conda activate brain-fly
 
+# Run the embodied FlyGym / MuJoCo bridge
+python main.py --embodied --steps 240
+
 # Run a 1-second benchmark on all backends
 python main.py --t_run 1 --n_run 1 --no_log_file
 
@@ -156,14 +193,20 @@ python main.py
 
 Backend flags are combinable: `--brian2-cpu --pytorch` runs Brian2 CPU then PyTorch.
 
+`--embodied` switches `main.py` into the whole-fly simulation runner instead of
+the benchmark suite. Once that flag is present, use `python main.py --embodied --help`
+for the embodied-specific options (`--world`, `--brain`, `--packet-path`, and
+timesteps).
+
 ## Project structure
 
 ```
 fly-brain/
-├── main.py                     # Entrypoint (benchmark runner CLI)
+├── main.py                     # Entrypoint (benchmark runner + embodied simulation CLI)
 ├── environment.yml             # Conda env definition (brain-fly)
 ├── code/
 │   ├── benchmark.py            # Orchestrator: config, logging, dispatcher
+│   ├── embodied_simulation.py  # Connectome -> FlyGym/MuJoCo -> pose packet bridge
 │   ├── run_brian2_cuda.py      # Brian2 / Brian2CUDA benchmark runner
 │   ├── run_pytorch.py          # PyTorch benchmark runner (model + utils)
 │   ├── run_nestgpu.py          # NEST GPU benchmark runner (subprocess per trial)

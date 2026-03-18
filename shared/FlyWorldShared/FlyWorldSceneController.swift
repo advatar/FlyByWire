@@ -215,16 +215,11 @@ final class FlyWorldSceneController {
         rig: FlyWorldBuild
     ) {
         let phase = motion.gaitPhase
-        let legPoses = FlyWorldLegID.allCases.map { leg in
-            FlyWorldLegKinematics.pose(
-                leg: leg,
-                packet: packet,
-                gaitPhase: phase,
-                leftStrideDrive: motion.leftStrideDrive,
-                rightStrideDrive: motion.rightStrideDrive,
-                behavior: motion.behavior
-            )
-        }
+        let legPoses = resolveLegPoses(
+            packet: packet,
+            motion: motion,
+            phase: phase
+        )
 
         for pose in legPoses {
             guard let legRig = rig.legs[pose.id] else { continue }
@@ -240,6 +235,31 @@ final class FlyWorldSceneController {
             phase: phase
         )
         applyBrainHalo(rig: rig, brainDrive: motion.brainDrive, behavior: motion.behavior, phase: phase)
+    }
+
+    private func resolveLegPoses(
+        packet: FlyWorldPosePacket,
+        motion: FlyWorldMotionFrame,
+        phase: Float
+    ) -> [FlyWorldLegPose] {
+        FlyWorldLegID.allCases.map { leg in
+            if motionMode == .directPose,
+               let directAngles = packet.directLegAngles(for: leg) {
+                return FlyWorldLegKinematics.pose(
+                    leg: leg,
+                    directAngles: directAngles
+                )
+            }
+
+            return FlyWorldLegKinematics.pose(
+                leg: leg,
+                packet: packet,
+                gaitPhase: phase,
+                leftStrideDrive: motion.leftStrideDrive,
+                rightStrideDrive: motion.rightStrideDrive,
+                behavior: motion.behavior
+            )
+        }
     }
 
     private func retargetLeg(

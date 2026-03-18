@@ -85,6 +85,21 @@ The whole-fly view now looks for a pose/world packet in the app Documents direct
 
 The shared schema is in `shared/FlyWorldSharedResources/vision_pro_pose_schema.json`. The bundled sample packet is `shared/FlyWorldSharedResources/sample_vision_pro_pose_packet.json`.
 
+To drive the whole-fly view from the repo's embodied simulation runner:
+
+```bash
+cd ../..
+python main.py --embodied --packet-path /path/to/app/Documents/vision_pro_pose_packet.json --real-time
+```
+
+If the packet contains canonical joint keys such as `LFCoxa`, `LFFemur`, and
+`LFTibia`, the viewer plays those leg joints directly. If not, it falls back to
+the shared brain-driven gait synthesis.
+
+On macOS that Documents directory is typically `~/Documents`. On visionOS
+simulator/device, use the app container Documents directory that the viewer
+resolves at runtime.
+
 ## Viewer Controls
 
 - `Volume`: stylized 3D anatomy reconstructed from the 2D slice.
@@ -101,4 +116,4 @@ The shared schema is in `shared/FlyWorldSharedResources/vision_pro_pose_schema.j
 
 - The whole-fly body is procedural, not a morphologically exact full-fly mesh.
 - The whole-fly graph exporter produces an abstract spectral layout derived from connectivity, not anatomical neuron geometry.
-- The whole-fly pose/world bridge is viewer-only: physics still belongs in MuJoCo/FlyGym or another external simulator.
+- The app is still a viewer. Physics runs outside the app, but the repo now includes `python main.py --embodied` to generate the live MuJoCo/FlyGym pose packet it consumes.

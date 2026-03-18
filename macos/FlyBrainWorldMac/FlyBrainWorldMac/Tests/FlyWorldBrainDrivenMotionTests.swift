@@ -376,6 +376,72 @@ final class FlyWorldBrainDrivenMotionTests: XCTestCase {
         XCTAssertGreaterThan(farNext.feedDrive, 0.9)
     }
 
+    func testDirectLegAnglesResolveForAllLegs() {
+        let packet = FlyWorldPosePacket(
+            timestamp: 0.0,
+            rootPositionMm: [0.0, 0.0, 0.2],
+            rootQuaternionXyzw: [0.0, 0.0, 0.0, 1.0],
+            jointAnglesRad: [
+                "LFCoxa": 0.10, "LFFemur": -0.20, "LFTibia": 0.30,
+                "RFCoxa": -0.10, "RFFemur": -0.19, "RFTibia": 0.29,
+                "LMCoxa": 0.08, "LMFemur": -0.18, "LMTibia": 0.24,
+                "RMCoxa": -0.08, "RMFemur": -0.17, "RMTibia": 0.23,
+                "LHCoxa": 0.06, "LHFemur": -0.16, "LHTibia": 0.21,
+                "RHCoxa": -0.06, "RHFemur": -0.15, "RHTibia": 0.20
+            ],
+            brainState: [:],
+            behavior: "walk",
+            worldObjects: []
+        )
+
+        for leg in FlyWorldLegID.allCases {
+            XCTAssertNotNil(packet.directLegAngles(for: leg))
+        }
+    }
+
+    func testDirectLegPoseUsesJointAnglesRelativeToRestGeometry() throws {
+        let restAngles = try XCTUnwrap(
+            FlyWorldPosePacket(
+                timestamp: 0.0,
+                rootPositionMm: [0.0, 0.0, 0.2],
+                rootQuaternionXyzw: [0.0, 0.0, 0.0, 1.0],
+                jointAnglesRad: [
+                    "LFCoxa": 0.0,
+                    "LFFemur": 0.0,
+                    "LFTibia": 0.0
+                ],
+                brainState: [:],
+                behavior: "walk",
+                worldObjects: []
+            ).directLegAngles(for: .leftFront)
+        )
+
+        let restPose = FlyWorldLegKinematics.pose(
+            leg: .leftFront,
+            directAngles: restAngles
+        )
+        let geometry = FlyWorldLegKinematics.geometry(for: .leftFront)
+
+        XCTAssertEqual(restPose.knee.x, geometry.knee.x, accuracy: 0.0001)
+        XCTAssertEqual(restPose.knee.y, geometry.knee.y, accuracy: 0.0001)
+        XCTAssertEqual(restPose.ankle.x, geometry.ankle.x, accuracy: 0.0001)
+        XCTAssertEqual(restPose.ankle.y, geometry.ankle.y, accuracy: 0.0001)
+        XCTAssertEqual(restPose.tip.x, geometry.tip.x, accuracy: 0.0001)
+        XCTAssertEqual(restPose.tip.y, geometry.tip.y, accuracy: 0.0001)
+
+        let flexedPose = FlyWorldLegKinematics.pose(
+            leg: .leftFront,
+            directAngles: FlyWorldDirectLegAngles(
+                coxa: 0.18,
+                femur: -0.26,
+                tibia: 0.22
+            )
+        )
+
+        XCTAssertGreaterThan(abs(flexedPose.knee.x - restPose.knee.x), 0.005)
+        XCTAssertGreaterThan(abs(flexedPose.tip.y - restPose.tip.y), 0.005)
+    }
+
     private func makePacket(
         rootPosition: [Float],
         brainState: [String: Float],

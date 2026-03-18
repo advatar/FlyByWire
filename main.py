@@ -5,6 +5,9 @@ Usage:
     # All backends, default experiment (Sugar GRNs 200 Hz)
     python main.py
 
+    # Run the embodied MuJoCo/FlyGym bridge instead of the benchmark suite
+    python main.py --embodied --steps 240 --packet-path ~/vision_pro_pose_packet.json
+
     # P9 forward-walking experiment instead
     python main.py --experiment p9
 
@@ -41,6 +44,12 @@ from benchmark import (
 
 
 def main():
+    if '--embodied' in sys.argv[1:]:
+        from embodied_simulation import main as embodied_main
+
+        embodied_args = [arg for arg in sys.argv[1:] if arg != '--embodied']
+        raise SystemExit(embodied_main(embodied_args))
+
     parser = argparse.ArgumentParser(description='Drosophila brain model benchmark')
     parser.add_argument('--t_run', type=float, nargs='+', default=None,
                         help='Simulation duration(s) in seconds. '

@@ -62,6 +62,34 @@ struct FlyWorldPosePacketSource {
     let modificationDate: Date?
 }
 
+struct FlyWorldDirectLegAngles {
+    let coxa: Float
+    let femur: Float
+    let tibia: Float
+}
+
+extension FlyWorldPosePacket {
+    func directLegAngles(for leg: FlyWorldLegID) -> FlyWorldDirectLegAngles? {
+        func value(_ key: String) -> Float? {
+            jointAnglesRad[key]
+        }
+
+        let prefix = leg.packetJointPrefix
+
+        guard let coxa = value("\(prefix)Coxa"),
+              let femur = value("\(prefix)Femur"),
+              let tibia = value("\(prefix)Tibia") else {
+            return nil
+        }
+
+        return FlyWorldDirectLegAngles(
+            coxa: coxa,
+            femur: femur,
+            tibia: tibia
+        )
+    }
+}
+
 extension FlyWorldPosePacket {
     private static let candidateNames = [
         "vision_pro_pose_packet",

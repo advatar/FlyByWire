@@ -132,6 +132,10 @@ enum FlyWorldLegID: CaseIterable, Hashable {
         }
     }
 
+    var packetJointPrefix: String {
+        prefix
+    }
+
     var phaseOffset: Float {
         switch self {
         case .leftFront, .rightMid, .leftHind:
@@ -330,6 +334,69 @@ enum FlyWorldLegKinematics {
                 legPhase: legPhase,
                 strideDrive: clampedStride
             )
+        )
+    }
+
+    static func pose(
+        leg: FlyWorldLegID,
+        directAngles: FlyWorldDirectLegAngles
+    ) -> FlyWorldLegPose {
+        let geometry = geometry(for: leg)
+        let upperPlanar = SIMD2<Float>(
+            geometry.knee.x - geometry.shoulder.x,
+            geometry.knee.y - geometry.shoulder.y
+        )
+        let lowerPlanar = SIMD2<Float>(
+            geometry.ankle.x - geometry.knee.x,
+            geometry.ankle.y - geometry.knee.y
+        )
+        let tarsusPlanar = SIMD2<Float>(
+            geometry.tip.x - geometry.ankle.x,
+            geometry.tip.y - geometry.ankle.y
+        )
+
+        let upperLength = max(simd_length(upperPlanar), 0.0001)
+        let lowerLength = max(simd_length(lowerPlanar), 0.0001)
+        let tarsusLength = max(simd_length(tarsusPlanar), 0.0001)
+
+        let upperBaseAngle = atan2(upperPlanar.y, upperPlanar.x)
+        let lowerBaseAngle = atan2(lowerPlanar.y, lowerPlanar.x)
+        let tarsusBaseAngle = atan2(tarsusPlanar.y, tarsusPlanar.x)
+
+        let femurDelta = lowerBaseAngle - upperBaseAngle
+        let tibiaDelta = tarsusBaseAngle - lowerBaseAngle
+
+        let upperAngle = upperBaseAngle + directAngles.coxa
+        let lowerAngle = upperAngle + femurDelta + directAngles.femur
+        let tarsusAngle = lowerAngle + tibiaDelta + directAngles.tibia
+
+        let shoulder = geometry.shoulder
+        let knee = SIMD3<Float>(
+            shoulder.x + cos(upperAngle) * upperLength,
+            shoulder.y + sin(upperAngle) * upperLength,
+            geometry.knee.z
+        )
+        let ankle = SIMD3<Float>(
+            knee.x + cos(lowerAngle) * lowerLength,
+            knee.y + sin(lowerAngle) * lowerLength,
+            geometry.ankle.z
+        )
+        let tip = SIMD3<Float>(
+            ankle.x + cos(tarsusAngle) * tarsusLength,
+            ankle.y + sin(tarsusAngle) * tarsusLength,
+            geometry.tip.z
+        )
+
+        let contactThreshold: Float = 0.035
+        let contactAmount: Float = tip.y <= geometry.tip.y + contactThreshold ? 1.0 : 0.0
+
+        return FlyWorldLegPose(
+            id: leg,
+            shoulder: shoulder,
+            knee: knee,
+            ankle: ankle,
+            tip: tip,
+            contactAmount: contactAmount
         )
     }
 
