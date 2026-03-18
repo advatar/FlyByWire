@@ -19,3 +19,5 @@
 - [x] Tighten arena-size regression coverage so the fly remains small relative to the floor.
 - [x] Add edge sensing to the fallback locomotion controller so the fly turns before walking into the arena boundary.
 - [x] Add regression coverage for edge-avoidance signals and turn-around behavior.
+- [x] Add obstacle sensing to the fallback locomotion controller so the fly turns away from arena obstacles instead of walking through them.
+- [x] Add regression coverage for obstacle-avoidance signals and turn-away locomotion behavior.

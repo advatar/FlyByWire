@@ -441,6 +441,12 @@ struct FlyWorldBrainDrivenMotionController {
         referenceTime: TimeInterval
     ) {
         positionMm = packet.rootPositionVector
+        let clampedPlanarPosition = clampedPlanarPosition(
+            SIMD2<Float>(positionMm.x, positionMm.y),
+            objects: packet.worldObjectsOrDefault
+        )
+        positionMm.x = clampedPlanarPosition.x
+        positionMm.y = clampedPlanarPosition.y
         heading = headingFromSimulationQuaternion(packet.rootQuaternion)
         gaitPhase = 0.0
         lastStepTime = referenceTime
@@ -505,7 +511,7 @@ struct FlyWorldBrainDrivenMotionController {
         }
 
         let unclampedPlanarPosition = planarPosition
-        planarPosition = clampedToArena(planarPosition)
+        planarPosition = clampedPlanarPosition(planarPosition, objects: packet.worldObjectsOrDefault)
         if simd_distance_squared(unclampedPlanarPosition, planarPosition) > 0.0001 {
             for pose in poses where pose.isInContact {
                 footholdAnchorsMm[pose.id] = planarPosition + rotatePlanar(pose.planarTipMm, angle: heading)
@@ -596,10 +602,15 @@ struct FlyWorldBrainDrivenMotionController {
         return dt
     }
 
-    private func clampedToArena(_ planarPosition: SIMD2<Float>) -> SIMD2<Float> {
-        let distance = simd_length(planarPosition)
-        guard distance > FlyWorldLegKinematics.arenaRadiusMm else { return planarPosition }
-        return simd_normalize(planarPosition) * FlyWorldLegKinematics.arenaRadiusMm
+    private func clampedPlanarPosition(
+        _ planarPosition: SIMD2<Float>,
+        objects: [FlyWorldPosePacket.WorldObject]
+    ) -> SIMD2<Float> {
+        FlyWorldObstacleAvoidance.clampedPlanarPosition(
+            planarPosition,
+            insideArenaRadius: FlyWorldLegKinematics.arenaRadiusMm,
+            objects: objects
+        )
     }
 }
 
@@ -661,6 +672,241 @@ struct FlyWorldArenaEdgeSignals: Equatable {
     }
 }
 
+struct FlyWorldObstacleSignals: Equatable {
+    let obstacleDrive: Float
+    let turnIntent: Float
+    let forwardScale: Float
+
+    static let zero = FlyWorldObstacleSignals(
+        obstacleDrive: 0.0,
+        turnIntent: 0.0,
+        forwardScale: 1.0
+    )
+
+    static func sensing(
+        currentPositionMm: SIMD3<Float>,
+        currentHeading: Float,
+        objects: [FlyWorldPosePacket.WorldObject]
+    ) -> FlyWorldObstacleSignals {
+        let footprints = FlyWorldObstacleAvoidance.obstacleFootprints(from: objects)
+        guard !footprints.isEmpty else { return .zero }
+
+        let planarPosition = SIMD2<Float>(currentPositionMm.x, currentPositionMm.y)
+        let forwardVector = SIMD2<Float>(cos(currentHeading), sin(currentHeading))
+        let lateralVector = SIMD2<Float>(-forwardVector.y, forwardVector.x)
+        let previewDistanceMm: Float = 3.6
+
+        var strongestDrive: Float = 0.0
+        var accumulatedTurn: Float = 0.0
+        var forwardScale: Float = 1.0
+
+        for footprint in footprints {
+            let offset = footprint.centerMm - planarPosition
+            let distance = simd_length(offset)
+            let surfaceDistance = distance - footprint.radiusMm
+            let forwardDistance = simd_dot(offset, forwardVector)
+            let lateralDistance = simd_dot(offset, lateralVector)
+
+            if forwardDistance < -(footprint.radiusMm + 0.35) && surfaceDistance > 0.25 {
+                continue
+            }
+
+            let corridorRadius = footprint.radiusMm + 0.95
+            if abs(lateralDistance) > corridorRadius && surfaceDistance > 0.8 {
+                continue
+            }
+
+            let forwardWeight: Float
+            if forwardDistance >= 0.0 {
+                forwardWeight = clamp(
+                    (previewDistanceMm + footprint.radiusMm - forwardDistance) /
+                        (previewDistanceMm + footprint.radiusMm),
+                    min: 0.0,
+                    max: 1.0
+                )
+            } else {
+                forwardWeight = clamp(
+                    1.0 + forwardDistance / (footprint.radiusMm + 0.6),
+                    min: 0.0,
+                    max: 1.0
+                )
+            }
+
+            let lateralWeight = clamp(
+                1.0 - abs(lateralDistance) / corridorRadius,
+                min: 0.0,
+                max: 1.0
+            )
+            let surfaceWeight = clamp(
+                (2.0 - surfaceDistance) / 2.0,
+                min: 0.0,
+                max: 1.0
+            )
+
+            let obstacleDrive = clamp(
+                surfaceWeight * 0.34 + lateralWeight * forwardWeight * 0.84,
+                min: 0.0,
+                max: 1.0
+            )
+            guard obstacleDrive > 0.0001 else { continue }
+
+            let turnSign = avoidanceTurnSign(
+                currentPositionMm: planarPosition,
+                currentHeading: currentHeading,
+                obstacleCenterMm: footprint.centerMm,
+                lateralDistance: lateralDistance
+            )
+            let forwardBias = max(0.18, 1.0 - obstacleDrive * 0.52)
+            let sidestepStrength = 0.62 + obstacleDrive * 0.68
+            let desiredVector = simd_normalize(
+                forwardVector * forwardBias +
+                    lateralVector * turnSign * sidestepStrength
+            )
+            let desiredHeading = atan2(desiredVector.y, desiredVector.x)
+            let headingError = wrapAngle(desiredHeading - currentHeading)
+
+            let turnIntent = clamp(
+                headingError * (1.02 + obstacleDrive * 0.74),
+                min: -1.35,
+                max: 1.35
+            ) * obstacleDrive
+
+            strongestDrive = max(strongestDrive, obstacleDrive)
+            accumulatedTurn += turnIntent
+            forwardScale = min(
+                forwardScale,
+                clamp(1.0 - obstacleDrive * 0.72, min: 0.18, max: 1.0)
+            )
+        }
+
+        guard strongestDrive > 0.0001 else { return .zero }
+        return FlyWorldObstacleSignals(
+            obstacleDrive: strongestDrive,
+            turnIntent: clamp(accumulatedTurn, min: -1.6, max: 1.6),
+            forwardScale: forwardScale
+        )
+    }
+
+    private static func avoidanceTurnSign(
+        currentPositionMm: SIMD2<Float>,
+        currentHeading: Float,
+        obstacleCenterMm: SIMD2<Float>,
+        lateralDistance: Float
+    ) -> Float {
+        if abs(lateralDistance) > 0.08 {
+            return lateralDistance > 0.0 ? -1.0 : 1.0
+        }
+
+        let forwardVector = SIMD2<Float>(cos(currentHeading), sin(currentHeading))
+        let lateralVector = SIMD2<Float>(-forwardVector.y, forwardVector.x)
+        let sidestepDistance: Float = 1.9
+        let leftCandidate = currentPositionMm + lateralVector * sidestepDistance
+        let rightCandidate = currentPositionMm - lateralVector * sidestepDistance
+        let leftMargin = FlyWorldLegKinematics.arenaRadiusMm - simd_length(leftCandidate)
+        let rightMargin = FlyWorldLegKinematics.arenaRadiusMm - simd_length(rightCandidate)
+
+        if leftMargin > rightMargin + 0.05 {
+            return 1.0
+        }
+        if rightMargin > leftMargin + 0.05 {
+            return -1.0
+        }
+
+        return obstacleCenterMm.y >= currentPositionMm.y ? -1.0 : 1.0
+    }
+}
+
+struct FlyWorldObstacleFootprint: Equatable {
+    let centerMm: SIMD2<Float>
+    let radiusMm: Float
+}
+
+enum FlyWorldObstacleAvoidance {
+    static let flyClearanceRadiusMm: Float = 1.05
+
+    static func obstacleFootprint(
+        for object: FlyWorldPosePacket.WorldObject
+    ) -> FlyWorldObstacleFootprint? {
+        let kind = normalizedKind(for: object.kind)
+        guard ["obstacle", "barrier", "wall"].contains(kind) else { return nil }
+
+        let size = object.sizeVector ?? defaultSize(for: kind)
+        let footprintRadius = max(size.x, size.z) * 0.5 + flyClearanceRadiusMm
+        return FlyWorldObstacleFootprint(
+            centerMm: SIMD2<Float>(object.positionVector.x, object.positionVector.y),
+            radiusMm: footprintRadius
+        )
+    }
+
+    static func obstacleFootprints(
+        from objects: [FlyWorldPosePacket.WorldObject]
+    ) -> [FlyWorldObstacleFootprint] {
+        objects.compactMap(obstacleFootprint(for:))
+    }
+
+    static func clampedPlanarPosition(
+        _ planarPosition: SIMD2<Float>,
+        insideArenaRadius arenaRadiusMm: Float,
+        objects: [FlyWorldPosePacket.WorldObject]
+    ) -> SIMD2<Float> {
+        var candidate = clampedToArena(planarPosition, radiusMm: arenaRadiusMm)
+        let footprints = obstacleFootprints(from: objects)
+        guard !footprints.isEmpty else { return candidate }
+
+        for _ in 0..<3 {
+            var changed = false
+            for footprint in footprints {
+                let offset = candidate - footprint.centerMm
+                let distanceSquared = simd_length_squared(offset)
+                let radiusSquared = footprint.radiusMm * footprint.radiusMm
+                guard distanceSquared < radiusSquared else { continue }
+
+                let direction: SIMD2<Float>
+                if distanceSquared > 0.0001 {
+                    direction = simd_normalize(offset)
+                } else {
+                    direction = SIMD2<Float>(1.0, 0.0)
+                }
+
+                candidate = footprint.centerMm + direction * footprint.radiusMm
+                candidate = clampedToArena(candidate, radiusMm: arenaRadiusMm)
+                changed = true
+            }
+
+            if !changed {
+                break
+            }
+        }
+
+        return candidate
+    }
+
+    private static func normalizedKind(for kind: String) -> String {
+        kind
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "-", with: "_")
+            .lowercased()
+    }
+
+    private static func defaultSize(for kind: String) -> SIMD3<Float> {
+        switch kind {
+        case "wall":
+            return SIMD3<Float>(2.6, 1.6, 0.9)
+        default:
+            return SIMD3<Float>(2.1, 1.3, 2.1)
+        }
+    }
+
+    private static func clampedToArena(
+        _ planarPosition: SIMD2<Float>,
+        radiusMm: Float
+    ) -> SIMD2<Float> {
+        let distance = simd_length(planarPosition)
+        guard distance > radiusMm else { return planarPosition }
+        return simd_normalize(planarPosition) * radiusMm
+    }
+}
+
 private enum FlyWorldLowLevelController {
     static func command(
         packet: FlyWorldPosePacket,
@@ -672,6 +918,11 @@ private enum FlyWorldLowLevelController {
         let edgeSignals = FlyWorldArenaEdgeSignals.sensing(
             currentPositionMm: currentPositionMm,
             currentHeading: currentHeading
+        )
+        let obstacleSignals = FlyWorldObstacleSignals.sensing(
+            currentPositionMm: currentPositionMm,
+            currentHeading: currentHeading,
+            objects: packet.worldObjectsOrDefault
         )
         let locomotionBase = clamp(
             descending.forwardDrive + descending.escapeDrive * 0.45 - descending.groomDrive * 0.35,
@@ -740,6 +991,8 @@ private enum FlyWorldLowLevelController {
         if behavior != "idle" && behavior != "groom" {
             turnIntent += edgeSignals.turnIntent
             locomotionDrive *= edgeSignals.forwardScale
+            turnIntent += obstacleSignals.turnIntent
+            locomotionDrive *= obstacleSignals.forwardScale
         }
 
         let leftStrideDrive = clamp(locomotionDrive + turnIntent * 0.32, min: 0.0, max: 1.4)
@@ -785,7 +1038,13 @@ private enum FlyWorldLowLevelController {
             rightStrideDrive: rightStrideDrive,
             feedDrive: max(descending.feedDrive, behavior == "feed" ? 1.0 : 0.0),
             escapeDrive: max(descending.escapeDrive, behavior == "escape" ? 1.0 : 0.0),
-            brainDrive: max(descending.maxDrive, max(strideAverage, edgeSignals.edgeDrive * 0.82))
+            brainDrive: max(
+                descending.maxDrive,
+                max(
+                    strideAverage,
+                    max(edgeSignals.edgeDrive * 0.82, obstacleSignals.obstacleDrive * 0.88)
+                )
+            )
         )
     }
 

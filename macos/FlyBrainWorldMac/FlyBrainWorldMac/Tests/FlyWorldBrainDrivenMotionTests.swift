@@ -1,4 +1,5 @@
 import XCTest
+import simd
 @testable import FlyBrainWorldMac
 
 final class FlyWorldBrainDrivenMotionTests: XCTestCase {
@@ -164,6 +165,89 @@ final class FlyWorldBrainDrivenMotionTests: XCTestCase {
 
         XCTAssertLessThan(finalRadius, startRadius - 0.35)
         XCTAssertLessThan(forward.x, 0.2)
+    }
+
+    func testObstacleSignalsBiasTurnAwayFromObstacleAhead() {
+        let obstacle = FlyWorldPosePacket.WorldObject(
+            id: "block",
+            kind: "obstacle",
+            label: "Block",
+            positionMm: [3.0, 0.0, 0.0],
+            sizeMm: [1.4, 1.0, 1.4],
+            color: nil,
+            opacity: nil
+        )
+
+        let aheadSignals = FlyWorldObstacleSignals.sensing(
+            currentPositionMm: [0.0, 0.0, 0.2],
+            currentHeading: 0.0,
+            objects: [obstacle]
+        )
+        let awaySignals = FlyWorldObstacleSignals.sensing(
+            currentPositionMm: [0.0, 0.0, 0.2],
+            currentHeading: .pi,
+            objects: [obstacle]
+        )
+
+        XCTAssertGreaterThan(aheadSignals.obstacleDrive, 0.45)
+        XCTAssertGreaterThan(abs(aheadSignals.turnIntent), 0.35)
+        XCTAssertLessThan(aheadSignals.forwardScale, 0.7)
+        XCTAssertLessThan(awaySignals.obstacleDrive, 0.15)
+        XCTAssertEqual(awaySignals.forwardScale, 1.0, accuracy: 0.0001)
+    }
+
+    func testObstacleAvoidanceTurnsFlyAwayBeforeCrossingObstacle() throws {
+        var controller = FlyWorldBrainDrivenMotionController()
+        let obstacle = FlyWorldPosePacket.WorldObject(
+            id: "block",
+            kind: "obstacle",
+            label: "Block",
+            positionMm: [3.2, 0.0, 0.0],
+            sizeMm: [1.4, 1.0, 1.4],
+            color: nil,
+            opacity: nil
+        )
+        let obstacleFootprint = try XCTUnwrap(FlyWorldObstacleAvoidance.obstacleFootprint(for: obstacle))
+        let packet = makePacket(
+            rootPosition: [0.0, 0.0, 0.2],
+            brainState: [
+                "oDN1": 0.84
+            ],
+            behavior: "walk",
+            worldObjects: [obstacle]
+        )
+
+        controller.reset(using: packet, referenceTime: 0.0)
+
+        var frame = controller.synthesize(packet: packet, time: 0.0)
+        var minimumObstacleDistance = simd_length(
+            SIMD2<Float>(frame.rootPositionMm.x, frame.rootPositionMm.y) - obstacleFootprint.centerMm
+        )
+        var maximumLateralOffset = abs(frame.rootPositionMm.y)
+
+        for step in 1...60 {
+            frame = controller.synthesize(packet: packet, time: Double(step) * 0.1)
+            let planarPosition = SIMD2<Float>(frame.rootPositionMm.x, frame.rootPositionMm.y)
+            minimumObstacleDistance = min(
+                minimumObstacleDistance,
+                simd_length(planarPosition - obstacleFootprint.centerMm)
+            )
+            maximumLateralOffset = max(maximumLateralOffset, abs(frame.rootPositionMm.y))
+        }
+
+        let forward = frame.rootQuaternion.act(SIMD3<Float>(1.0, 0.0, 0.0))
+        let towardObstacle = simd_normalize(
+            obstacleFootprint.centerMm - SIMD2<Float>(frame.rootPositionMm.x, frame.rootPositionMm.y)
+        )
+
+        XCTAssertGreaterThan(minimumObstacleDistance, obstacleFootprint.radiusMm - 0.02)
+        XCTAssertGreaterThan(maximumLateralOffset, 1.1)
+        XCTAssertGreaterThan(abs(frame.rootPositionMm.y), 0.7)
+        XCTAssertGreaterThan(
+            simd_length(SIMD2<Float>(frame.rootPositionMm.x, frame.rootPositionMm.y)),
+            1.4
+        )
+        XCTAssertLessThan(simd_dot(SIMD2<Float>(forward.x, forward.y), towardObstacle), -0.15)
     }
 
     func testTripodSupportAlternatesAcrossGaitCycle() {
