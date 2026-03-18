@@ -17,3 +17,5 @@
 - [x] Restore visible non-escape wing animation and add regression coverage for walk presentation.
 - [x] Enlarge the shared arena radius so the floor reads much bigger than the fly.
 - [x] Tighten arena-size regression coverage so the fly remains small relative to the floor.
+- [x] Add edge sensing to the fallback locomotion controller so the fly turns before walking into the arena boundary.
+- [x] Add regression coverage for edge-avoidance signals and turn-around behavior.

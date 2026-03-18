@@ -124,6 +124,48 @@ final class FlyWorldBrainDrivenMotionTests: XCTestCase {
         XCTAssertEqual(supportAverageY, FlyWorldLegKinematics.arenaFloorSceneY, accuracy: 0.025)
     }
 
+    func testArenaEdgeSignalsBiasTurnBackTowardCenter() {
+        let outwardSignals = FlyWorldArenaEdgeSignals.sensing(
+            currentPositionMm: [FlyWorldLegKinematics.arenaRadiusMm * 0.88, 0.0, 0.2],
+            currentHeading: 0.0
+        )
+        let inwardSignals = FlyWorldArenaEdgeSignals.sensing(
+            currentPositionMm: [FlyWorldLegKinematics.arenaRadiusMm * 0.88, 0.0, 0.2],
+            currentHeading: .pi
+        )
+
+        XCTAssertGreaterThan(outwardSignals.edgeDrive, 0.45)
+        XCTAssertGreaterThan(outwardSignals.turnIntent, 0.35)
+        XCTAssertLessThan(outwardSignals.forwardScale, 0.7)
+        XCTAssertLessThan(inwardSignals.edgeDrive, 0.12)
+        XCTAssertEqual(inwardSignals.forwardScale, 1.0, accuracy: 0.0001)
+    }
+
+    func testEdgeAvoidanceTurnsFlyBackIntoArena() {
+        var controller = FlyWorldBrainDrivenMotionController()
+        let startRadius = FlyWorldLegKinematics.arenaRadiusMm * 0.88
+        let packet = makePacket(
+            rootPosition: [startRadius, 0.0, 0.2],
+            brainState: [
+                "oDN1": 0.82
+            ],
+            behavior: "walk"
+        )
+
+        controller.reset(using: packet, referenceTime: 0.0)
+
+        var frame = controller.synthesize(packet: packet, time: 0.0)
+        for step in 1...32 {
+            frame = controller.synthesize(packet: packet, time: Double(step) * 0.1)
+        }
+
+        let finalRadius = hypot(frame.rootPositionMm.x, frame.rootPositionMm.y)
+        let forward = frame.rootQuaternion.act(SIMD3<Float>(1.0, 0.0, 0.0))
+
+        XCTAssertLessThan(finalRadius, startRadius - 0.35)
+        XCTAssertLessThan(forward.x, 0.2)
+    }
+
     func testTripodSupportAlternatesAcrossGaitCycle() {
         let packet = makePacket(
             rootPosition: [0.0, 0.0, 0.2],

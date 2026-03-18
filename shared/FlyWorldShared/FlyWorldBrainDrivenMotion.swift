@@ -614,6 +614,53 @@ private struct FlyWorldLowLevelCommand {
     let brainDrive: Float
 }
 
+struct FlyWorldArenaEdgeSignals: Equatable {
+    let edgeDrive: Float
+    let turnIntent: Float
+    let forwardScale: Float
+
+    static let zero = FlyWorldArenaEdgeSignals(
+        edgeDrive: 0.0,
+        turnIntent: 0.0,
+        forwardScale: 1.0
+    )
+
+    static func sensing(
+        currentPositionMm: SIMD3<Float>,
+        currentHeading: Float
+    ) -> FlyWorldArenaEdgeSignals {
+        let planarPosition = SIMD2<Float>(currentPositionMm.x, currentPositionMm.y)
+        let distance = simd_length(planarPosition)
+        guard distance > 0.001 else { return .zero }
+
+        let forwardVector = SIMD2<Float>(cos(currentHeading), sin(currentHeading))
+        let previewDistanceMm: Float = 1.15
+        let previewDistance = simd_length(planarPosition + forwardVector * previewDistanceMm)
+        let edgeDrive = clamp(
+            (previewDistance - FlyWorldLegKinematics.arenaRadiusMm * 0.76) /
+                (FlyWorldLegKinematics.arenaRadiusMm * 0.18),
+            min: 0.0,
+            max: 1.0
+        )
+        guard edgeDrive > 0.0001 else { return .zero }
+
+        let desiredHeading = atan2(-planarPosition.y, -planarPosition.x)
+        let headingError = wrapAngle(desiredHeading - currentHeading)
+        let turnIntent = clamp(
+            headingError * (0.95 + edgeDrive * 0.55),
+            min: -1.4,
+            max: 1.4
+        ) * edgeDrive
+        let forwardScale = clamp(1.0 - edgeDrive * 0.82, min: 0.18, max: 1.0)
+
+        return FlyWorldArenaEdgeSignals(
+            edgeDrive: edgeDrive,
+            turnIntent: turnIntent,
+            forwardScale: forwardScale
+        )
+    }
+}
+
 private enum FlyWorldLowLevelController {
     static func command(
         packet: FlyWorldPosePacket,
@@ -622,6 +669,10 @@ private enum FlyWorldLowLevelController {
         currentPositionMm: SIMD3<Float>,
         currentHeading: Float
     ) -> FlyWorldLowLevelCommand {
+        let edgeSignals = FlyWorldArenaEdgeSignals.sensing(
+            currentPositionMm: currentPositionMm,
+            currentHeading: currentHeading
+        )
         let locomotionBase = clamp(
             descending.forwardDrive + descending.escapeDrive * 0.45 - descending.groomDrive * 0.35,
             min: 0.0,
@@ -686,6 +737,11 @@ private enum FlyWorldLowLevelController {
             break
         }
 
+        if behavior != "idle" && behavior != "groom" {
+            turnIntent += edgeSignals.turnIntent
+            locomotionDrive *= edgeSignals.forwardScale
+        }
+
         let leftStrideDrive = clamp(locomotionDrive + turnIntent * 0.32, min: 0.0, max: 1.4)
         let rightStrideDrive = clamp(locomotionDrive - turnIntent * 0.32, min: 0.0, max: 1.4)
         let strideAverage = (leftStrideDrive + rightStrideDrive) * 0.5
@@ -729,7 +785,7 @@ private enum FlyWorldLowLevelController {
             rightStrideDrive: rightStrideDrive,
             feedDrive: max(descending.feedDrive, behavior == "feed" ? 1.0 : 0.0),
             escapeDrive: max(descending.escapeDrive, behavior == "escape" ? 1.0 : 0.0),
-            brainDrive: max(descending.maxDrive, strideAverage)
+            brainDrive: max(descending.maxDrive, max(strideAverage, edgeSignals.edgeDrive * 0.82))
         )
     }
 
