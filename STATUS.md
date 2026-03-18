@@ -21,3 +21,4 @@
 - [x] Add regression coverage for edge-avoidance signals and turn-around behavior.
 - [x] Add obstacle sensing to the fallback locomotion controller so the fly turns away from arena obstacles instead of walking through them.
 - [x] Add regression coverage for obstacle-avoidance signals and turn-away locomotion behavior.
+- [x] Regenerate the FlyBrainVision project so the shared brain-driven motion source is compiled into the visionOS target and verify the build.

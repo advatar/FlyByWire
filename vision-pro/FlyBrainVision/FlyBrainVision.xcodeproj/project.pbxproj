@@ -20,6 +20,7 @@
 		7E172B6DD80883038AD7ABB6 /* WholeFlyFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 406EFE5030B0A9DF8A4CA7C8 /* WholeFlyFactory.swift */; };
 		8A4162F460F429AB55854215 /* AtlasMesh.json in Resources */ = {isa = PBXBuildFile; fileRef = A5CE7CA95196464AC4056D2E /* AtlasMesh.json */; };
 		9B054F69EDE4D3F6D858F0AA /* FlyWorldSceneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70C626F7BDA1A9311D723550 /* FlyWorldSceneController.swift */; };
+		9DD4FFD1437322496121660D /* FlyWorldBrainDrivenMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82A38C95F40C8FC3FBCE7A0D /* FlyWorldBrainDrivenMotion.swift */; };
 		A0A82F5DBD6C14576468A712 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AD1BFF3331C7189C416E483 /* ContentView.swift */; };
 		AEF17A96439232E5FACEF07A /* FlyWorldPosePacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE47EB0D6A9FCDD444B34CA2 /* FlyWorldPosePacket.swift */; };
 		B4C04F9727F6F6381554711D /* FlyWorldGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBFE0AA7D1656F44745B4657 /* FlyWorldGraph.swift */; };
@@ -43,6 +44,7 @@
 		70C626F7BDA1A9311D723550 /* FlyWorldSceneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldSceneController.swift; sourceTree = "<group>"; };
 		73C9900FA2675DC30162FD13 /* WholeFlyGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WholeFlyGraph.swift; sourceTree = "<group>"; };
 		755BCA1503184B3F7922568C /* ConnectomeBackbone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectomeBackbone.swift; sourceTree = "<group>"; };
+		82A38C95F40C8FC3FBCE7A0D /* FlyWorldBrainDrivenMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlyWorldBrainDrivenMotion.swift; sourceTree = "<group>"; };
 		84CACEDB5939296376A2ACBD /* vision_pro_pose_schema.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = vision_pro_pose_schema.json; sourceTree = "<group>"; };
 		850D476EE0DADB603BB65236 /* FlyBrainVision.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FlyBrainVision.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		86E30D7E6836DEDED5FD4843 /* sample_vision_pro_pose_packet.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sample_vision_pro_pose_packet.json; sourceTree = "<group>"; };
@@ -119,6 +121,7 @@
 		8B7AB4ECF766DC1F261CC11D /* FlyWorldShared */ = {
 			isa = PBXGroup;
 			children = (
+				82A38C95F40C8FC3FBCE7A0D /* FlyWorldBrainDrivenMotion.swift */,
 				DBFE0AA7D1656F44745B4657 /* FlyWorldGraph.swift */,
 				AE47EB0D6A9FCDD444B34CA2 /* FlyWorldPosePacket.swift */,
 				70C626F7BDA1A9311D723550 /* FlyWorldSceneController.swift */,
@@ -237,6 +240,7 @@
 				B4E42D058B5DE0C6D32933D4 /* ConnectomeGraphFactory.swift in Sources */,
 				A0A82F5DBD6C14576468A712 /* ContentView.swift in Sources */,
 				D09D0FB11087059844CC7405 /* FlyBrainVisionApp.swift in Sources */,
+				9DD4FFD1437322496121660D /* FlyWorldBrainDrivenMotion.swift in Sources */,
 				B4C04F9727F6F6381554711D /* FlyWorldGraph.swift in Sources */,
 				AEF17A96439232E5FACEF07A /* FlyWorldPosePacket.swift in Sources */,
 				9B054F69EDE4D3F6D858F0AA /* FlyWorldSceneController.swift in Sources */,
