@@ -26,3 +26,7 @@
 - [x] Update the shared viewer pipeline so live pose packets can use direct leg-joint data instead of only the fallback gait synthesis.
 - [x] Add regression tests and docs for the embodied simulation bridge and direct-pose playback path.
 - [x] Commit and push the outstanding FlyBrainVision Xcode project configuration updates.
+- [x] Add production-grade runtime diagnostics and graceful backend preflight handling for the Python CLI.
+- [x] Add CLI smoke tests and benchmark validation coverage for the Python surface.
+- [x] Add CI coverage for Python smoke/tests and the macOS viewer test suite.
+- [x] Refresh repository docs for the production workflow, diagnostics, and verification commands.

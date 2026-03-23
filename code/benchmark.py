@@ -17,8 +17,11 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 os.environ['PYTHONUNBUFFERED'] = '1'
 
+from dataclasses import dataclass
 from pathlib import Path
 from datetime import datetime
+
+from runtime_validation import evaluate_runtime, format_import_exception, format_runtime_report
 
 # ============================================================================
 # Benchmark Configuration
@@ -37,6 +40,11 @@ path_con = (current_dir / '../data/2025_Connectivity_783.parquet').resolve()
 path_res = (current_dir / '../data/results').resolve()
 path_wt = (current_dir / '../data').resolve()
 csv_path = (current_dir / '../data/benchmark-results.csv').resolve()
+
+BENCHMARK_DATA_PATHS = (
+    (path_comp, 'Completeness CSV'),
+    (path_con, 'Connectivity parquet'),
+)
 
 # ============================================================================
 # Experiment Definitions
@@ -110,7 +118,9 @@ class BenchmarkLogger:
         self.log_file = log_file
         self.file_handle = None
         if log_file:
-            self.file_handle = open(log_file, 'a')
+            log_path = Path(log_file)
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            self.file_handle = log_path.open('a', encoding='utf-8')
 
     def log(self, message, end='\n'):
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -138,7 +148,7 @@ class BenchmarkLogger:
 CSV_COLUMNS = [
     'framework', 'n_run', 't_run',
     'setup_time', 'build_time', 'sim_time', 'total_time',
-    'realtime_ratio', 'spikes', 'active_neurons', 'status', 'timestamp',
+    'rt_ratio', 'spikes', 'active_neurons', 'status', 'timestamp',
 ]
 
 
@@ -161,7 +171,7 @@ def save_result_csv(backend_name, result):
         'build_time': round(t.get('device_build', 0), 3),
         'sim_time': round(t.get('simulation_total', 0), 3),
         'total_time': round(t.get('total_elapsed', 0), 3),
-        'realtime_ratio': round(t.get('realtime_ratio', 0), 4),
+        'rt_ratio': round(t.get('realtime_ratio', 0), 4),
         'spikes': result.get('n_spikes', 0),
         'active_neurons': result.get('n_active_neurons', 0),
         'status': result.get('status', 'unknown'),
@@ -175,7 +185,10 @@ def save_result_csv(backend_name, result):
         with open(csv_path, 'r', newline='') as f:
             reader = csv.DictReader(f)
             for r in reader:
-                existing_rows.append(r)
+                normalized = {column: r.get(column, '') for column in CSV_COLUMNS}
+                if not normalized['rt_ratio'] and r.get('realtime_ratio'):
+                    normalized['rt_ratio'] = r['realtime_ratio']
+                existing_rows.append(normalized)
 
     updated = False
     for i, r in enumerate(existing_rows):
@@ -243,6 +256,49 @@ def print_summary_table(all_results, backend_name, logger):
     logger.log_raw("")
     logger.log("Benchmark suite complete!")
 
+
+def collect_benchmark_runtime_checks(backends):
+    checks = [
+        evaluate_runtime(
+            name='Benchmark data',
+            required_paths=BENCHMARK_DATA_PATHS,
+        )
+    ]
+    for backend in backends:
+        spec = BACKEND_RUNTIME_SPECS[backend]
+        checks.append(
+            evaluate_runtime(
+                name=BACKEND_NAMES[backend],
+                module_names=spec.modules,
+                install_hint=spec.install_hint,
+            )
+        )
+    return checks
+
+
+def format_benchmark_runtime_report(backends):
+    return format_runtime_report(
+        title='Benchmark runtime validation',
+        checks=collect_benchmark_runtime_checks(backends),
+    )
+
+
+def build_backend_skip_results(t_run_values=None, n_run_values=None, status='unavailable'):
+    results = []
+    for t_run_sec in (t_run_values or T_RUN_VALUES_SEC):
+        for n_run in (n_run_values or N_RUN_VALUES):
+            results.append(
+                {
+                    'n_run': n_run,
+                    't_run_sec': t_run_sec,
+                    'timings': {},
+                    'n_spikes': 0,
+                    'n_active_neurons': 0,
+                    'status': status,
+                }
+            )
+    return results
+
 # ============================================================================
 # Backend Dispatcher
 # ============================================================================
@@ -252,6 +308,44 @@ BACKEND_NAMES = {
     'gpu': 'Brian2CUDA (GPU)',
     'pytorch': 'PyTorch',
     'nestgpu': 'NEST GPU',
+}
+
+
+@dataclass(frozen=True)
+class BackendRuntimeSpec:
+    modules: tuple[str, ...]
+    install_hint: str
+
+
+BACKEND_RUNTIME_SPECS = {
+    'cpu': BackendRuntimeSpec(
+        modules=('pandas', 'pyarrow', 'brian2', 'joblib'),
+        install_hint=(
+            "Brian2 CPU mode needs the repo environment or equivalent packages. "
+            "Use `conda env create -f environment.yml`."
+        ),
+    ),
+    'gpu': BackendRuntimeSpec(
+        modules=('pandas', 'pyarrow', 'brian2', 'brian2cuda', 'joblib'),
+        install_hint=(
+            "Brian2CUDA mode needs the repo environment plus a working CUDA toolchain. "
+            "Use `conda env create -f environment.yml` and verify CUDA is installed."
+        ),
+    ),
+    'pytorch': BackendRuntimeSpec(
+        modules=('pandas', 'pyarrow', 'torch'),
+        install_hint=(
+            "PyTorch mode needs NumPy 1.x-compatible pandas/pyarrow wheels and torch. "
+            "Use `conda env create -f environment.yml`."
+        ),
+    ),
+    'nestgpu': BackendRuntimeSpec(
+        modules=('pandas', 'pyarrow', 'nestgpu'),
+        install_hint=(
+            "NEST GPU mode needs the Python data stack plus a source-built `nestgpu` install. "
+            "Follow the README NEST GPU setup."
+        ),
+    ),
 }
 
 
@@ -275,10 +369,17 @@ def run_benchmarks(backends, t_run_values=None, n_run_values=None,
 
     all_results = {}
     total_backends = len(backends)
+    runtime_checks = {
+        check.name: check
+        for check in collect_benchmark_runtime_checks(backends)
+    }
+    data_check = runtime_checks['Benchmark data']
 
     logger.log(f"Experiment: {experiment['name']}")
     logger.log(f"Stimulated neurons: {len(experiment['neu_exc'])} "
                f"at {experiment['stim_rate']} Hz")
+    logger.log_raw("")
+    logger.log_raw(format_benchmark_runtime_report(backends))
 
     for bi, backend in enumerate(backends, 1):
         logger.log_raw("")
@@ -286,36 +387,76 @@ def run_benchmarks(backends, t_run_values=None, n_run_values=None,
             f">>> Starting backend {bi}/{total_backends}: "
             f"{BACKEND_NAMES[backend]}"
         )
+        backend_check = runtime_checks[BACKEND_NAMES[backend]]
 
-        if backend in ('cpu', 'gpu'):
-            from run_brian2_cuda import run_all_benchmarks as run_brian2
-            results = run_brian2(
-                use_cuda=(backend == 'gpu'),
+        if not data_check.available or not backend_check.available:
+            reasons = []
+            if not data_check.available:
+                reasons.append(data_check.summary)
+            if not backend_check.available:
+                reasons.append(backend_check.summary)
+            status = "unavailable: " + "; ".join(reasons)
+            logger.log(f"Skipping backend preflight failure: {status}")
+            results = build_backend_skip_results(
                 t_run_values=t_run_values,
                 n_run_values=n_run_values,
-                experiment=experiment,
-                logger=logger,
+                status=status,
             )
+            for result in results:
+                save_result_csv(BACKEND_NAMES[backend], result)
+            print_summary_table(results, BACKEND_NAMES[backend], logger)
             all_results[backend] = results
+            logger.log(
+                f"<<< Finished backend {bi}/{total_backends}: "
+                f"{BACKEND_NAMES[backend]}"
+            )
+            continue
 
-        elif backend == 'pytorch':
-            from run_pytorch import run_all_benchmarks as run_torch
-            results = run_torch(
+        try:
+            if backend in ('cpu', 'gpu'):
+                if backend == 'gpu':
+                    import brian2cuda  # noqa: F401
+                from run_brian2_cuda import run_all_benchmarks as run_brian2
+                results = run_brian2(
+                    use_cuda=(backend == 'gpu'),
+                    t_run_values=t_run_values,
+                    n_run_values=n_run_values,
+                    experiment=experiment,
+                    logger=logger,
+                )
+                all_results[backend] = results
+
+            elif backend == 'pytorch':
+                from run_pytorch import run_all_benchmarks as run_torch
+                results = run_torch(
+                    t_run_values=t_run_values,
+                    n_run_values=n_run_values,
+                    experiment=experiment,
+                    logger=logger,
+                )
+                all_results[backend] = results
+
+            elif backend == 'nestgpu':
+                from run_nestgpu import run_all_benchmarks as run_nest
+                results = run_nest(
+                    t_run_values=t_run_values,
+                    n_run_values=n_run_values,
+                    experiment=experiment,
+                    logger=logger,
+                )
+                all_results[backend] = results
+        except Exception as exc:
+            status = f"error: {format_import_exception(exc)}"
+            logger.log(f"Backend failed before benchmark completion: {status}")
+            logger.log("Use `python3 main.py --validate ...` to inspect runtime readiness.")
+            results = build_backend_skip_results(
                 t_run_values=t_run_values,
                 n_run_values=n_run_values,
-                experiment=experiment,
-                logger=logger,
+                status=status,
             )
-            all_results[backend] = results
-
-        elif backend == 'nestgpu':
-            from run_nestgpu import run_all_benchmarks as run_nest
-            results = run_nest(
-                t_run_values=t_run_values,
-                n_run_values=n_run_values,
-                experiment=experiment,
-                logger=logger,
-            )
+            for result in results:
+                save_result_csv(BACKEND_NAMES[backend], result)
+            print_summary_table(results, BACKEND_NAMES[backend], logger)
             all_results[backend] = results
 
         logger.log(

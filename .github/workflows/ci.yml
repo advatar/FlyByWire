@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - feature/**
+  pull_request:
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip pytest
+      - name: Run Python tests
+        run: pytest -q
+
+  macos-viewer-tests:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run FlyBrainWorldMac tests
+        run: xcodebuild test -project macos/FlyBrainWorldMac/FlyBrainWorldMac.xcodeproj -scheme FlyBrainWorldMac -destination 'platform=macOS'

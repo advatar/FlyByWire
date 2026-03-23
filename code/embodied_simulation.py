@@ -17,10 +17,8 @@ from __future__ import annotations
 
 import argparse
 import ast
-import contextlib
 import importlib
 import inspect
-import io
 import json
 import math
 import sys
@@ -28,6 +26,14 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Protocol, Sequence, Tuple
+
+from runtime_validation import (
+    RuntimeDependencyError,
+    evaluate_runtime,
+    format_runtime_report,
+    ready_runtime_check,
+    require_runtime,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -87,46 +93,31 @@ def mean_or_zero(values: Iterable[float]) -> float:
     return sum(values_list) / len(values_list)
 
 
-class EmbodiedRuntimeDependencyError(RuntimeError):
+class EmbodiedRuntimeDependencyError(RuntimeDependencyError):
     """Raised when the embodied simulation runtime is not installed."""
 
 
-def _format_import_exception(exc: Exception) -> str:
-    message = str(exc).strip()
-    if not message:
-        return exc.__class__.__name__
-    return f"{exc.__class__.__name__}: {message}"
-
-
-def _require_modules(module_names: Sequence[str], install_hint: str) -> None:
-    failures = []
-    for module_name in module_names:
-        try:
-            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                importlib.import_module(module_name)
-        except Exception as exc:
-            failures.append(f"{module_name} ({_format_import_exception(exc)})")
-
-    if failures:
-        failure_summary = "; ".join(failures)
-        raise EmbodiedRuntimeDependencyError(f"{failure_summary}. {install_hint}")
-
-
 def validate_connectome_runtime() -> None:
-    _require_modules(
+    require_runtime(
         ("torch", "pandas", "pyarrow"),
-        "Embodied connectome mode needs a Python env with torch, pandas, pyarrow, "
-        "and NumPy 1.x-compatible wheels. Use `conda env create -f environment.yml` "
-        "or install `python3.11 -m pip install \"numpy<2\" pandas pyarrow torch`.",
+        install_hint=(
+            "Embodied connectome mode needs a Python env with torch, pandas, pyarrow, "
+            "and NumPy 1.x-compatible wheels. Use `conda env create -f environment.yml` "
+            "or install `python3.11 -m pip install \"numpy<2\" pandas pyarrow torch`."
+        ),
+        error_type=EmbodiedRuntimeDependencyError,
     )
 
 
 def validate_flygym_runtime() -> None:
-    _require_modules(
+    require_runtime(
         ("flygym", "mujoco"),
-        "Embodied world mode needs FlyGym and MuJoCo. Use "
-        "`conda env create -f environment.yml` or install "
-        "`python3.11 -m pip install flygym`.",
+        install_hint=(
+            "Embodied world mode needs FlyGym and MuJoCo. Use "
+            "`conda env create -f environment.yml` or install "
+            "`python3.11 -m pip install flygym`."
+        ),
+        error_type=EmbodiedRuntimeDependencyError,
     )
 
 
@@ -998,6 +989,63 @@ class EmbodiedSimulation:
                 time.sleep(self.control_dt_s)
 
 
+def collect_embodied_runtime_checks(args: argparse.Namespace):
+    from benchmark import path_comp, path_con
+
+    checks = []
+    if args.brain == "surrogate":
+        checks.append(
+            ready_runtime_check(
+                name="Embodied brain runtime",
+                detail="Using surrogate brain mode; no heavy connectome dependencies required.",
+            )
+        )
+    else:
+        checks.append(
+            evaluate_runtime(
+                name="Embodied brain runtime",
+                module_names=("torch", "pandas", "pyarrow"),
+                install_hint=(
+                    "Embodied connectome mode needs a Python env with torch, pandas, pyarrow, "
+                    "and NumPy 1.x-compatible wheels. Use `conda env create -f environment.yml`."
+                ),
+                required_paths=(
+                    (NOTEBOOK_PATH, "Notebook neuron registry"),
+                    (path_comp, "Completeness CSV"),
+                    (path_con, "Connectivity parquet"),
+                ),
+            )
+        )
+
+    if args.world == "mock":
+        checks.append(
+            ready_runtime_check(
+                name="Embodied world runtime",
+                detail="Using mock world mode; FlyGym and MuJoCo are not required.",
+            )
+        )
+    else:
+        checks.append(
+            evaluate_runtime(
+                name="Embodied world runtime",
+                module_names=("flygym", "mujoco"),
+                install_hint=(
+                    "Embodied world mode needs FlyGym and MuJoCo. Use "
+                    "`conda env create -f environment.yml` or install "
+                    "`python3.11 -m pip install flygym`."
+                ),
+            )
+        )
+    return checks
+
+
+def format_embodied_runtime_report(args: argparse.Namespace) -> str:
+    return format_runtime_report(
+        title="Embodied runtime validation",
+        checks=collect_embodied_runtime_checks(args),
+    )
+
+
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the embodied MuJoCo/FlyGym fly simulation")
     parser.add_argument(
@@ -1047,10 +1095,20 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Sleep between control steps so the packet stream advances in wall-clock time.",
     )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Validate the selected embodied runtime dependencies, then exit.",
+    )
     return parser
 
 
 def run_from_args(args: argparse.Namespace) -> int:
+    if args.validate:
+        print(format_embodied_runtime_report(args))
+        checks = collect_embodied_runtime_checks(args)
+        return 0 if all(check.available for check in checks) else 1
+
     control_dt_s = args.control_dt_ms / 1000.0
     packet_writer = PosePacketWriter(args.packet_path)
     if args.brain == "surrogate":

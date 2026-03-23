@@ -32,16 +32,16 @@ to framework-specific runners:
 
 ```bash
 # Run all 4 frameworks with default durations (0.1s–1000s) and trials (1, 30)
-python main.py
+python3 main.py
 
 # Specific durations and trial count
-python main.py --t_run 0.1 1 10 --n_run 1
+python3 main.py --t_run 0.1 1 10 --n_run 1
 
 # Single framework
-python main.py --nestgpu --t_run 1 --n_run 1
+python3 main.py --nestgpu --t_run 1 --n_run 1
 
 # Combine frameworks
-python main.py --brian2-cpu --pytorch --t_run 0.1 1 --n_run 1 30
+python3 main.py --brian2-cpu --pytorch --t_run 0.1 1 --n_run 1 30
 ```
 
 Results are incrementally saved to `data/benchmark-results.csv` as each
@@ -61,17 +61,17 @@ The repo also includes a closed-loop embodied bridge that:
 Run the full simulation with the real connectome and FlyGym world:
 
 ```bash
-python main.py --embodied --steps 240 --real-time
+python3 main.py --embodied --steps 240 --real-time
 ```
 
 Useful variants:
 
 ```bash
 # Explicit packet output path
-python main.py --embodied --packet-path ~/vision_pro_pose_packet.json
+python3 main.py --embodied --packet-path ~/vision_pro_pose_packet.json
 
 # Development fallback without FlyGym / MuJoCo
-python main.py --embodied --brain surrogate --world mock --steps 240
+python3 main.py --embodied --brain surrogate --world mock --steps 240
 ```
 
 The embodied runner lives in `code/embodied_simulation.py`. It writes canonical
@@ -94,6 +94,26 @@ conda activate brain-fly
 If you are using a custom Python instead of the repo environment, keep `numpy`
 on the 1.x series for the `pandas` / `pyarrow` stack used by the connectome
 runner.
+
+### Runtime validation
+
+The CLI now includes a production preflight mode so you can check the selected
+surface before starting a long run:
+
+```bash
+# Validate all benchmark backends plus shared data files
+python3 main.py --validate
+
+# Validate a specific benchmark surface
+python3 main.py --validate --pytorch
+
+# Validate the embodied development path
+python3 main.py --embodied --validate --brain surrogate --world mock
+```
+
+`--validate` exits with status `0` only when every requested dependency and
+required data file is available. During normal benchmark runs, unavailable
+backends are reported cleanly and skipped instead of crashing the entire suite.
 
 ### NEST GPU
 
@@ -161,20 +181,20 @@ conda env create -f environment.yml
 conda activate brain-fly
 
 # Run the embodied FlyGym / MuJoCo bridge
-python main.py --embodied --steps 240
+python3 main.py --embodied --steps 240
 
 # Run a 1-second benchmark on all backends
-python main.py --t_run 1 --n_run 1 --no_log_file
+python3 main.py --t_run 1 --n_run 1 --no_log_file
 
 # Specific backends (combinable)
-python main.py --brian2-cpu                    # Brian2 CPU only
-python main.py --brian2cuda-gpu               # Brian2CUDA GPU only
-python main.py --pytorch                      # PyTorch only
-python main.py --nestgpu                      # NEST GPU only
-python main.py --pytorch --nestgpu            # PyTorch + NEST GPU
+python3 main.py --brian2-cpu                   # Brian2 CPU only
+python3 main.py --brian2cuda-gpu               # Brian2CUDA GPU only
+python3 main.py --pytorch                      # PyTorch only
+python3 main.py --nestgpu                      # NEST GPU only
+python3 main.py --pytorch --nestgpu            # PyTorch + NEST GPU
 
 # Full benchmark suite (all durations, n_run=1 then 30, all backends)
-python main.py
+python3 main.py
 ```
 
 ### `main.py` options
@@ -190,13 +210,26 @@ python main.py
 | `--n_run` | Number of independent trials, e.g. `--n_run 1 30` |
 | `--log_file FILE` | Write log to file (default: `data/results/benchmarks.log`) |
 | `--no_log_file` | Console output only |
+| `--validate` | Validate runtime dependencies and required data files, then exit |
 
 Backend flags are combinable: `--brian2-cpu --pytorch` runs Brian2 CPU then PyTorch.
 
 `--embodied` switches `main.py` into the whole-fly simulation runner instead of
-the benchmark suite. Once that flag is present, use `python main.py --embodied --help`
+the benchmark suite. Once that flag is present, use `python3 main.py --embodied --help`
 for the embodied-specific options (`--world`, `--brain`, `--packet-path`, and
 timesteps).
+
+## Verification
+
+Local verification commands:
+
+```bash
+pytest -q
+xcodebuild test -project macos/FlyBrainWorldMac/FlyBrainWorldMac.xcodeproj -scheme FlyBrainWorldMac -destination 'platform=macOS'
+```
+
+GitHub Actions runs the same Python and macOS viewer checks from
+`.github/workflows/ci.yml`.
 
 ## Project structure
 
