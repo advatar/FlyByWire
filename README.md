@@ -78,6 +78,11 @@ The embodied runner lives in `code/embodied_simulation.py`. It writes canonical
 leg joint angles (`LFCoxa`, `LFFemur`, `LFTibia`, etc.) so the shared viewers can
 play back direct joint poses instead of only synthesizing a fallback gait.
 
+The viewer packet is now backward-compatible with both:
+
+- the original single-fly payload (`root_position_mm`, `joint_angles_rad`, `brain_state`, `behavior`)
+- a multi-fly payload with an `agents` array, so external tools such as `LearningToFly/run_viewer_export.py` can inject several evolved generations into one scene
+
 ## Installation
 
 ### Conda environment

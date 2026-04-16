@@ -2,6 +2,26 @@ import Foundation
 import simd
 
 struct FlyWorldPosePacket: Decodable {
+    struct Agent: Decodable, Identifiable {
+        let id: String
+        let label: String?
+        let generation: Int?
+        let score: Float?
+        let rootPositionMm: [Float]
+        let rootQuaternionXyzw: [Float]
+        let jointAnglesRad: [String: Float]
+        let brainState: [String: Float]
+        let behavior: String
+
+        var rootPositionVector: SIMD3<Float> {
+            FlyWorldPosePacket.vector3(from: rootPositionMm, fallback: .zero)
+        }
+
+        var rootQuaternion: simd_quatf {
+            FlyWorldPosePacket.quaternion(from: rootQuaternionXyzw)
+        }
+    }
+
     struct WorldObject: Decodable, Identifiable {
         let id: String
         let kind: String
@@ -28,13 +48,80 @@ struct FlyWorldPosePacket: Decodable {
     let brainState: [String: Float]
     let behavior: String
     let worldObjects: [WorldObject]?
+    let agents: [Agent]?
+
+    init(
+        timestamp: Double,
+        rootPositionMm: [Float],
+        rootQuaternionXyzw: [Float],
+        jointAnglesRad: [String: Float],
+        brainState: [String: Float],
+        behavior: String,
+        worldObjects: [WorldObject]?,
+        agents: [Agent]? = nil
+    ) {
+        self.timestamp = timestamp
+        self.rootPositionMm = rootPositionMm
+        self.rootQuaternionXyzw = rootQuaternionXyzw
+        self.jointAnglesRad = jointAnglesRad
+        self.brainState = brainState
+        self.behavior = behavior
+        self.worldObjects = worldObjects
+        self.agents = agents
+    }
 
     var rootPositionVector: SIMD3<Float> {
         Self.vector3(from: rootPositionMm, fallback: .zero)
     }
 
     var rootQuaternion: simd_quatf {
-        let values = rootQuaternionXyzw
+        Self.quaternion(from: rootQuaternionXyzw)
+    }
+
+    var worldObjectsOrDefault: [WorldObject] {
+        worldObjects ?? []
+    }
+
+    var displayAgents: [Agent] {
+        if let agents, !agents.isEmpty {
+            return agents
+        }
+        return [legacyPrimaryAgent]
+    }
+
+    func packet(for agent: Agent) -> FlyWorldPosePacket {
+        FlyWorldPosePacket(
+            timestamp: timestamp,
+            rootPositionMm: agent.rootPositionMm,
+            rootQuaternionXyzw: agent.rootQuaternionXyzw,
+            jointAnglesRad: agent.jointAnglesRad,
+            brainState: agent.brainState,
+            behavior: agent.behavior,
+            worldObjects: worldObjects,
+            agents: nil
+        )
+    }
+
+    private var legacyPrimaryAgent: Agent {
+        Agent(
+            id: "primary",
+            label: nil,
+            generation: nil,
+            score: nil,
+            rootPositionMm: rootPositionMm,
+            rootQuaternionXyzw: rootQuaternionXyzw,
+            jointAnglesRad: jointAnglesRad,
+            brainState: brainState,
+            behavior: behavior
+        )
+    }
+
+    fileprivate static func vector3(from values: [Float], fallback: SIMD3<Float>) -> SIMD3<Float> {
+        guard values.count >= 3 else { return fallback }
+        return SIMD3(values[0], values[1], values[2])
+    }
+
+    fileprivate static func quaternion(from values: [Float]) -> simd_quatf {
         guard values.count >= 4 else {
             return simd_quatf(angle: 0.0, axis: SIMD3<Float>(0.0, 1.0, 0.0))
         }
@@ -44,15 +131,6 @@ struct FlyWorldPosePacket: Decodable {
             return simd_quatf(angle: 0.0, axis: SIMD3<Float>(0.0, 1.0, 0.0))
         }
         return simd_normalize(quaternion)
-    }
-
-    var worldObjectsOrDefault: [WorldObject] {
-        worldObjects ?? []
-    }
-
-    fileprivate static func vector3(from values: [Float], fallback: SIMD3<Float>) -> SIMD3<Float> {
-        guard values.count >= 3 else { return fallback }
-        return SIMD3(values[0], values[1], values[2])
     }
 }
 
@@ -70,6 +148,21 @@ struct FlyWorldDirectLegAngles {
 
 extension FlyWorldPosePacket {
     func directLegAngles(for leg: FlyWorldLegID) -> FlyWorldDirectLegAngles? {
+        Self.directLegAngles(jointAnglesRad: jointAnglesRad, for: leg)
+    }
+}
+
+extension FlyWorldPosePacket.Agent {
+    func directLegAngles(for leg: FlyWorldLegID) -> FlyWorldDirectLegAngles? {
+        FlyWorldPosePacket.directLegAngles(jointAnglesRad: jointAnglesRad, for: leg)
+    }
+}
+
+extension FlyWorldPosePacket {
+    fileprivate static func directLegAngles(
+        jointAnglesRad: [String: Float],
+        for leg: FlyWorldLegID
+    ) -> FlyWorldDirectLegAngles? {
         func value(_ key: String) -> Float? {
             jointAnglesRad[key]
         }

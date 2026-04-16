@@ -19,6 +19,58 @@
     "loom_escape": 0.0
   },
   "behavior": "walk",
+  "agents": [
+    {
+      "id": "generation-0",
+      "label": "Gen 0",
+      "generation": 0,
+      "score": 1.25,
+      "root_position_mm": [-4.0, 0.0, 0.2],
+      "root_quaternion_xyzw": [0.0, 0.0, 0.0, 1.0],
+      "joint_angles_rad": {
+        "LFCoxa": 0.0,
+        "LFFemur": 0.0,
+        "LFTibia": 0.0,
+        "RFCoxa": 0.0,
+        "RFFemur": 0.0,
+        "RFTibia": 0.0
+      },
+      "brain_state": {
+        "DNa01": 0.0,
+        "DNa02": 0.0,
+        "oDN1": 0.35,
+        "aDN1": 0.0,
+        "MN9": 0.0,
+        "loom_escape": 0.0
+      },
+      "behavior": "walk"
+    },
+    {
+      "id": "generation-8",
+      "label": "Gen 8",
+      "generation": 8,
+      "score": 1.82,
+      "root_position_mm": [4.0, 0.0, 0.2],
+      "root_quaternion_xyzw": [0.0, 0.0, 0.0, 1.0],
+      "joint_angles_rad": {
+        "LFCoxa": 0.12,
+        "LFFemur": -0.08,
+        "LFTibia": 0.16,
+        "RFCoxa": -0.12,
+        "RFFemur": -0.08,
+        "RFTibia": 0.16
+      },
+      "brain_state": {
+        "DNa01": 0.08,
+        "DNa02": 0.0,
+        "oDN1": 0.52,
+        "aDN1": 0.0,
+        "MN9": 0.0,
+        "loom_escape": 0.0
+      },
+      "behavior": "walk"
+    }
+  ],
   "world_objects": [
     {
       "id": "sugar-bowl",

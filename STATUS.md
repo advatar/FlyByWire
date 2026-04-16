@@ -30,3 +30,6 @@
 - [x] Add CLI smoke tests and benchmark validation coverage for the Python surface.
 - [x] Add CI coverage for Python smoke/tests and the macOS viewer test suite.
 - [x] Refresh repository docs for the production workflow, diagnostics, and verification commands.
+- [x] Extend the shared pose packet contract to support multiple injected flies while preserving single-fly compatibility.
+- [x] Render multiple injected flies in the shared world viewer from an external packet stream.
+- [x] Add regression coverage and docs for the multi-fly packet workflow.

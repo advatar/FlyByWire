@@ -34,3 +34,5 @@ To drive motion from the simulator bridge instead, keep updating one of these fi
 - `fly_world_pose_packet.json`
 
 The packet schema lives in `shared/FlyWorldSharedResources/vision_pro_pose_schema.json`.
+It now supports either the original single-fly fields or a multi-fly `agents`
+array for injected generation comparisons.

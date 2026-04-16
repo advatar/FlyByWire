@@ -51,6 +51,10 @@ When the packet includes canonical leg joint keys such as `LFCoxa`, `LFFemur`,
 and `LFTibia`, the viewer uses direct leg-joint playback. Legs without direct
 angles still fall back to the shared synthesized gait.
 
+The shared packet contract also accepts an optional `agents` array. When present,
+the app renders one fly per agent entry, which is how the `LearningToFly`
+generation exporter can show several evolved flies at once.
+
 ## Viewer Controls
 
 - Drag with the mouse to orbit around the fly.

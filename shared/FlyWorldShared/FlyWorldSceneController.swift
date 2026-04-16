@@ -65,14 +65,16 @@ final class FlyWorldSceneController {
 
     private let arenaRoot = Entity()
     private let worldObjectsRoot = Entity()
+    private var graph: FlyWorldGraph?
     private var rig: FlyWorldBuild?
+    private var extraRigs: [String: FlyWorldBuild] = [:]
     private var poseTask: Task<Void, Never>?
     private var latestPacket: FlyWorldPosePacket?
     private var latestPoseSource: FlyWorldPosePacketSource?
     private var lastPacketSignature: String?
     private var isLoaded = false
     private var motionMode: FlyWorldMotionMode = .brainDrivenFallback
-    private var brainMotionController = FlyWorldBrainDrivenMotionController()
+    private var brainMotionControllers: [String: FlyWorldBrainDrivenMotionController] = [:]
 
     private let floorY: Float = FlyWorldLegKinematics.arenaFloorSceneY
     private let millimeterScale: Float = FlyWorldLegKinematics.sceneMillimeterScale
@@ -91,6 +93,7 @@ final class FlyWorldSceneController {
         guard !isLoaded else { return }
 
         let (graph, graphSource) = FlyWorldGraph.loadPreferred(bundle: bundle)
+        self.graph = graph
         let build = FlyWorldEntityFactory.makeScene(graph: graph)
         rig = build
         root.addChild(build.root)
@@ -160,39 +163,96 @@ final class FlyWorldSceneController {
 
     private func apply(packet: FlyWorldPosePacket, source: FlyWorldPosePacketSource?) {
         let renderTime = Date().timeIntervalSince1970
-        guard let rig else { return }
+        guard rig != nil else { return }
 
         latestPacket = packet
         latestPoseSource = source
         motionMode = source?.label == "Documents pose packet" ? .directPose : .brainDrivenFallback
         if motionMode == .brainDrivenFallback {
-            brainMotionController.reset(using: packet, referenceTime: renderTime)
+            resetBrainMotionControllers(for: packet, referenceTime: renderTime)
         }
 
-        let motion = resolveMotionFrame(packet: packet, time: renderTime)
-        applyRootTransform(motion: motion, rig: rig)
-        applyBehaviorState(packet: packet, motion: motion, rig: rig)
+        let behavior = render(packet: packet, time: renderTime)
         updateWorldObjects(from: packet.worldObjectsOrDefault)
-        refreshMetadata(packet: packet, source: source, behavior: motion.behavior)
+        refreshMetadata(packet: packet, source: source, behavior: behavior)
     }
 
     private func animate(at time: TimeInterval) {
-        guard let rig, let packet = latestPacket else { return }
-        let motion = resolveMotionFrame(packet: packet, time: time)
-        applyRootTransform(motion: motion, rig: rig)
-        applyBehaviorState(packet: packet, motion: motion, rig: rig)
+        guard rig != nil, let packet = latestPacket else { return }
+        _ = render(packet: packet, time: time)
         refreshPacketAge(referenceDate: Date(timeIntervalSince1970: time))
     }
 
     private func resolveMotionFrame(
         packet: FlyWorldPosePacket,
-        time: TimeInterval
+        time: TimeInterval,
+        agentID: String
     ) -> FlyWorldMotionFrame {
         switch motionMode {
         case .directPose:
             return FlyWorldMotionFrame.directPose(packet: packet, time: time)
         case .brainDrivenFallback:
-            return brainMotionController.synthesize(packet: packet, time: time)
+            var controller = brainMotionControllers[agentID] ?? FlyWorldBrainDrivenMotionController()
+            let motion = controller.synthesize(packet: packet, time: time)
+            brainMotionControllers[agentID] = controller
+            return motion
+        }
+    }
+
+    private func render(packet: FlyWorldPosePacket, time: TimeInterval) -> String {
+        syncExtraRigs(for: packet.displayAgents)
+
+        var primaryBehavior = packet.behavior
+        for (index, agent) in packet.displayAgents.enumerated() {
+            let agentPacket = packet.packet(for: agent)
+            let motion = resolveMotionFrame(packet: agentPacket, time: time, agentID: agent.id)
+            guard let build = rig(for: agent, index: index) else { continue }
+            applyRootTransform(motion: motion, rig: build)
+            applyBehaviorState(packet: agentPacket, motion: motion, rig: build)
+            if index == 0 {
+                primaryBehavior = motion.behavior
+            }
+        }
+
+        return primaryBehavior
+    }
+
+    private func rig(for agent: FlyWorldPosePacket.Agent, index: Int) -> FlyWorldBuild? {
+        if index == 0 {
+            return rig
+        }
+        return extraRigs[agent.id]
+    }
+
+    private func syncExtraRigs(for agents: [FlyWorldPosePacket.Agent]) {
+        guard let graph else { return }
+
+        let required = Set(agents.dropFirst().map(\.id))
+        for (agentID, build) in Array(extraRigs) where !required.contains(agentID) {
+            build.root.removeFromParent()
+            extraRigs.removeValue(forKey: agentID)
+            brainMotionControllers.removeValue(forKey: agentID)
+        }
+
+        for agent in agents.dropFirst() where extraRigs[agent.id] == nil {
+            let build = FlyWorldEntityFactory.makeScene(graph: graph)
+            extraRigs[agent.id] = build
+            root.addChild(build.root)
+        }
+    }
+
+    private func resetBrainMotionControllers(
+        for packet: FlyWorldPosePacket,
+        referenceTime: TimeInterval
+    ) {
+        let activeAgents = packet.displayAgents
+        let activeIDs = Set(activeAgents.map(\.id))
+        brainMotionControllers = brainMotionControllers.filter { activeIDs.contains($0.key) }
+
+        for agent in activeAgents {
+            var controller = brainMotionControllers[agent.id] ?? FlyWorldBrainDrivenMotionController()
+            controller.reset(using: packet.packet(for: agent), referenceTime: referenceTime)
+            brainMotionControllers[agent.id] = controller
         }
     }
 
@@ -477,7 +537,8 @@ final class FlyWorldSceneController {
             source.location ?? "bundle",
             source.modificationDate?.formatted(date: .numeric, time: .standard) ?? "none",
             String(packet.timestamp),
-            packet.behavior
+            packet.behavior,
+            String(packet.displayAgents.count)
         ].joined(separator: "|")
     }
 
