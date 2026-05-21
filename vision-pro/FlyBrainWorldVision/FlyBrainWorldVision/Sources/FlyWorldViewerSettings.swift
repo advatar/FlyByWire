@@ -5,6 +5,7 @@ import Observation
 @Observable
 final class FlyWorldViewerSettings {
     private static let packetURLDefaultsKey = "FlyWorldViewerSettings.packetURL"
+    private static let stalePoseURLSuffix = ":8765/pose"
 
     var sceneScale: Float = 0.16
     var verticalOffset: Float = -0.28
@@ -17,7 +18,8 @@ final class FlyWorldViewerSettings {
     }
 
     init() {
-        self.packetURL = UserDefaults.standard.string(forKey: Self.packetURLDefaultsKey) ?? ""
+        self.packetURL = Self.currentPacketURL()
+        UserDefaults.standard.set(packetURL, forKey: Self.packetURLDefaultsKey)
     }
 
     func reset() {
@@ -26,5 +28,20 @@ final class FlyWorldViewerSettings {
         depthOffset = 0.0
         yaw = 0.24
         // packetURL intentionally preserved across resets.
+    }
+
+    private static func currentPacketURL() -> String {
+        let fallback = FlyWorldSceneController.defaultPacketURLString
+        guard let saved = UserDefaults.standard.string(forKey: packetURLDefaultsKey) else {
+            return fallback
+        }
+        let trimmed = saved.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return fallback
+        }
+        if trimmed.contains(stalePoseURLSuffix), trimmed != fallback {
+            return fallback
+        }
+        return trimmed
     }
 }

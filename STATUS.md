@@ -33,3 +33,4 @@
 - [x] Extend the shared pose packet contract to support multiple injected flies while preserving single-fly compatibility.
 - [x] Render multiple injected flies in the shared world viewer from an external packet stream.
 - [x] Add regression coverage and docs for the multi-fly packet workflow.
+- [x] Default the fly-world viewers to the current LearningToFly LAN pose stream IP.

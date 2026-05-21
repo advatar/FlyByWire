@@ -120,11 +120,11 @@ struct FlyWorldControlWindow: View {
                     Text("LAN Pose Stream")
                         .font(.headline)
 
-                    Text("Paste the URL printed by `run_live_multi_fly.py` (e.g. http://192.168.1.42:8765/pose). Leave empty to fall back to the bundled packet.")
+                    Text("Using \(FlyWorldSceneController.defaultPacketURLString). Paste another URL only if the Mac's LAN IP changes.")
                         .foregroundStyle(.secondary)
                         .font(.footnote)
 
-                    TextField("http://<mac-lan-ip>:8765/pose", text: $viewerSettings.packetURL)
+                    TextField(FlyWorldSceneController.defaultPacketURLString, text: $viewerSettings.packetURL)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()

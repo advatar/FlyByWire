@@ -2,6 +2,13 @@ import XCTest
 @testable import FlyBrainWorldMac
 
 final class FlyWorldPosePacketTests: XCTestCase {
+    @MainActor
+    func testDefaultPoseStreamUsesCurrentLearningToFlyHost() throws {
+        XCTAssertEqual(FlyWorldSceneController.defaultPacketURLString, "http://192.168.2.209:8765/pose")
+        let controller = FlyWorldSceneController()
+        XCTAssertEqual(controller.packetURLString, FlyWorldSceneController.defaultPacketURLString)
+    }
+
     func testLegacyPacketExposesSingleDisplayAgent() throws {
         let packet = FlyWorldPosePacket(
             timestamp: 0.0,

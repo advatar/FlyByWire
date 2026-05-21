@@ -61,6 +61,8 @@ private enum FlyWorldMotionMode {
 @MainActor
 @Observable
 final class FlyWorldSceneController {
+    static let defaultPacketURLString = "http://192.168.2.209:8765/pose"
+
     let root = Entity()
 
     private let arenaRoot = Entity()
@@ -82,7 +84,7 @@ final class FlyWorldSceneController {
 
     private(set) var metadata: FlyWorldSceneMetadata?
     private(set) var errorMessage: String?
-    var packetURLString: String = ""
+    var packetURLString: String = FlyWorldSceneController.defaultPacketURLString
 
     init() {
         root.addChild(arenaRoot)
