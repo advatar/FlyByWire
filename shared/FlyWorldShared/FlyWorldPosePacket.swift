@@ -232,4 +232,31 @@ extension FlyWorldPosePacket {
         let data = try Data(contentsOf: url)
         return try JSONDecoder.flyWorld.decode(FlyWorldPosePacket.self, from: data)
     }
+
+    /// Fetch a pose packet from a LAN HTTP endpoint (e.g. the LearningToFly
+    /// `run_live_multi_fly.py` driver). Used when the Vision Pro device cannot
+    /// share a filesystem with the host running the simulator.
+    static func loadFromURL(_ url: URL, timeout: TimeInterval = 1.5) async -> (FlyWorldPosePacket, FlyWorldPosePacketSource)? {
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        request.timeoutInterval = timeout
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                return nil
+            }
+            let packet = try JSONDecoder.flyWorld.decode(FlyWorldPosePacket.self, from: data)
+            return (
+                packet,
+                FlyWorldPosePacketSource(
+                    label: "LAN pose stream",
+                    location: url.absoluteString,
+                    modificationDate: Date()
+                )
+            )
+        } catch {
+            return nil
+        }
+    }
 }

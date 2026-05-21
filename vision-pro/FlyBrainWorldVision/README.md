@@ -36,3 +36,15 @@ To drive motion from the simulator bridge instead, keep updating one of these fi
 The packet schema lives in `shared/FlyWorldSharedResources/vision_pro_pose_schema.json`.
 It now supports either the original single-fly fields or a multi-fly `agents`
 array for injected generation comparisons.
+
+## Bundled fallback flies
+
+The bundled `sample_vision_pro_pose_packet.json` now ships one fly per saved
+evolution champion from the sibling `LearningToFly` repository (one entry per
+top-level experiment under `LearningToFly/results/`). Cold-launching the app
+shows them all walking in a grid, animated by the brain-driven fallback. To
+regenerate the bundled packet after retraining, run from `LearningToFly/`:
+
+```bash
+python run_static_multi_fly_export.py
+```

@@ -44,6 +44,9 @@ enum FlyWorldBehaviorResolver {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
 
+        if normalized == "fly" {
+            return "fly"
+        }
         if descending.escapeDrive > 0.5 || normalized == "escape" {
             return "escape"
         }
@@ -77,6 +80,8 @@ enum FlyWorldPresentationTuning {
         let clampedStride = clamp(strideDrive, min: 0.0, max: 1.0)
 
         switch behavior {
+        case "fly":
+            return 0.82
         case "escape":
             return max(escapeDrive, 0.58)
         case "walk":
@@ -95,6 +100,8 @@ enum FlyWorldPresentationTuning {
         let clampedStride = clamp(strideDrive, min: 0.0, max: 1.0)
 
         switch behavior {
+        case "fly":
+            return 14.5
         case "escape":
             return 11.0
         case "walk":
@@ -283,6 +290,10 @@ enum FlyWorldLegKinematics {
         let tibiaBase: Float
 
         switch behavior {
+        case "fly":
+            coxaBase = sideDirection * 0.38
+            femurBase = 1.35
+            tibiaBase = 1.85
         case "groom":
             coxaBase = sideDirection * 0.52
             femurBase = -0.94
@@ -299,6 +310,8 @@ enum FlyWorldLegKinematics {
 
         let strideScale: Float
         switch behavior {
+        case "fly":
+            strideScale = 0.0
         case "groom":
             strideScale = 0.08
         case "feed":
@@ -427,6 +440,8 @@ enum FlyWorldLegKinematics {
         strideDrive: Float
     ) -> Float {
         switch behavior {
+        case "fly":
+            return 0.0
         case "idle", "groom":
             return 1.0
         default:
@@ -556,36 +571,69 @@ struct FlyWorldBrainDrivenMotionController {
         )
 
         var planarPosition = SIMD2<Float>(positionMm.x, positionMm.y)
-        var supportCandidates: [SIMD2<Float>] = []
 
-        for pose in poses {
-            if pose.isInContact {
-                if footholdAnchorsMm[pose.id] == nil || supportState[pose.id] != true {
+        if behavior == "fly" {
+            // No leg contact while flying — derive horizontal motion directly
+            // from the descending forward drive so flies actually traverse the
+            // arena. A soft turn-back keeps them inside a flyable bubble.
+            let flightSpeedMmPerSec: Float = 45.0
+            let driveSum = (command.leftStrideDrive + command.rightStrideDrive) * 0.5
+            let effectiveDrive = clamp(max(driveSum, descending.forwardDrive * 0.6), min: 0.18, max: 1.4)
+            let velocity = SIMD2<Float>(cos(heading), sin(heading)) * (effectiveDrive * flightSpeedMmPerSec)
+            planarPosition += velocity * Float(dt)
+
+            let maxRadiusMm: Float = 160.0
+            let radius = simd_length(planarPosition)
+            if radius > maxRadiusMm * 0.6 {
+                let toCenter = -planarPosition / max(radius, 0.001)
+                let targetHeading = atan2(toCenter.y, toCenter.x)
+                let edgeWeight = clamp((radius - maxRadiusMm * 0.6) / (maxRadiusMm * 0.4), min: 0.0, max: 1.0)
+                let turnRate: Float = 2.2 * edgeWeight
+                let headingDelta = wrapAngle(targetHeading - heading)
+                heading = wrapAngle(heading + headingDelta * turnRate * Float(dt))
+            }
+
+            footholdAnchorsMm.removeAll(keepingCapacity: true)
+        } else {
+            var supportCandidates: [SIMD2<Float>] = []
+
+            for pose in poses {
+                if pose.isInContact {
+                    if footholdAnchorsMm[pose.id] == nil || supportState[pose.id] != true {
+                        footholdAnchorsMm[pose.id] = planarPosition + rotatePlanar(pose.planarTipMm, angle: heading)
+                    }
+                    if let anchor = footholdAnchorsMm[pose.id] {
+                        supportCandidates.append(anchor - rotatePlanar(pose.planarTipMm, angle: heading))
+                    }
+                } else {
+                    footholdAnchorsMm.removeValue(forKey: pose.id)
+                }
+            }
+
+            if !supportCandidates.isEmpty {
+                planarPosition = supportCandidates.reduce(into: SIMD2<Float>(repeating: 0.0)) { partialResult, candidate in
+                    partialResult += candidate
+                } / Float(supportCandidates.count)
+            }
+
+            let unclampedPlanarPosition = planarPosition
+            planarPosition = clampedPlanarPosition(planarPosition, objects: packet.worldObjectsOrDefault)
+            if simd_distance_squared(unclampedPlanarPosition, planarPosition) > 0.0001 {
+                for pose in poses where pose.isInContact {
                     footholdAnchorsMm[pose.id] = planarPosition + rotatePlanar(pose.planarTipMm, angle: heading)
                 }
-                if let anchor = footholdAnchorsMm[pose.id] {
-                    supportCandidates.append(anchor - rotatePlanar(pose.planarTipMm, angle: heading))
-                }
-            } else {
-                footholdAnchorsMm.removeValue(forKey: pose.id)
             }
         }
 
-        if !supportCandidates.isEmpty {
-            planarPosition = supportCandidates.reduce(into: SIMD2<Float>(repeating: 0.0)) { partialResult, candidate in
-                partialResult += candidate
-            } / Float(supportCandidates.count)
+        let targetHeightMm: Float
+        if behavior == "fly" {
+            let packetAltitude = packet.rootPositionVector.z
+            let baseAltitude = packetAltitude > 0.5 ? packetAltitude : 12.0
+            let bob = sin(Float(time) * 3.5) * 1.5
+            targetHeightMm = baseAltitude + bob
+        } else {
+            targetHeightMm = FlyWorldLegKinematics.supportRootHeightMm(for: poses)
         }
-
-        let unclampedPlanarPosition = planarPosition
-        planarPosition = clampedPlanarPosition(planarPosition, objects: packet.worldObjectsOrDefault)
-        if simd_distance_squared(unclampedPlanarPosition, planarPosition) > 0.0001 {
-            for pose in poses where pose.isInContact {
-                footholdAnchorsMm[pose.id] = planarPosition + rotatePlanar(pose.planarTipMm, angle: heading)
-            }
-        }
-
-        let targetHeightMm = FlyWorldLegKinematics.supportRootHeightMm(for: poses)
         let heightBlend = clamp(dt * 12.0, min: 0.0, max: 1.0)
         let rootHeightMm = positionMm.z + (targetHeightMm - positionMm.z) * heightBlend
 

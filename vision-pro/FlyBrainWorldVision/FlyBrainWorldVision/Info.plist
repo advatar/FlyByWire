@@ -29,5 +29,14 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSWorldSensingUsageDescription</key>
+	<string>Detects the floor of your room so the evolved flies can be placed on it.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Streams live evolutionary simulation packets from the Mac running run_live_multi_fly.py.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

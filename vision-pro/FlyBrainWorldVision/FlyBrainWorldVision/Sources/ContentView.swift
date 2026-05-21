@@ -2,7 +2,10 @@ import RealityKit
 import SwiftUI
 
 struct FlyWorldVolumeView: View {
+    @Environment(\.openWindow) private var openWindow
+
     let sceneController: FlyWorldSceneController
+    let controlsWindowID: String
     @Bindable var viewerSettings: FlyWorldViewerSettings
 
     var body: some View {
@@ -16,6 +19,16 @@ struct FlyWorldVolumeView: View {
         } placeholder: {
             ProgressView("Building fly world...")
         }
+        .ornament(attachmentAnchor: .scene(.bottom), contentAlignment: .center) {
+            Button {
+                openWindow(id: controlsWindowID)
+            } label: {
+                Label("Show Controls", systemImage: "slider.horizontal.3")
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(12)
+            .glassBackgroundEffect()
+        }
     }
 
     private func updateScenePlacement() {
@@ -27,20 +40,35 @@ struct FlyWorldVolumeView: View {
 
 struct FlyWorldControlWindow: View {
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.dismissWindow) private var dismissWindow
+    @Environment(\.openImmersiveSpace) private var openImmersiveSpace
+    @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
 
     let volumeWindowID: String
+    let controlsWindowID: String
+    let immersiveSpaceID: String
     let sceneController: FlyWorldSceneController
     @Bindable var viewerSettings: FlyWorldViewerSettings
 
     @State private var didAutoOpen = false
+    @State private var roomModeActive = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Text("Fly World Vision")
-                    .font(.largeTitle.weight(.semibold))
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Fly World Vision")
+                        .font(.largeTitle.weight(.semibold))
+                    Spacer()
+                    Button {
+                        dismissWindow(id: controlsWindowID)
+                    } label: {
+                        Label("Hide", systemImage: "eye.slash")
+                    }
+                    .buttonStyle(.bordered)
+                }
 
-                Text("Dedicated Vision Pro whole-fly viewer with a separate control window. The volumetric fly stays clean while you adjust size and placement from here.")
+                Text("Dedicated Vision Pro whole-fly viewer with a separate control window. Hide this panel any time — bring it back from the Show Controls button under the fly volume.")
                     .foregroundStyle(.secondary)
 
                 HStack(spacing: 12) {
@@ -48,6 +76,22 @@ struct FlyWorldControlWindow: View {
                         openWindow(id: volumeWindowID)
                     }
                     .buttonStyle(.borderedProminent)
+
+                    Button(roomModeActive ? "Exit Room Mode" : "Enter Room Mode", systemImage: roomModeActive ? "rectangle.portrait.and.arrow.right" : "arkit") {
+                        Task {
+                            if roomModeActive {
+                                await dismissImmersiveSpace()
+                                roomModeActive = false
+                            } else {
+                                let result = await openImmersiveSpace(id: immersiveSpaceID)
+                                if case .opened = result {
+                                    roomModeActive = true
+                                    dismissWindow(id: volumeWindowID)
+                                }
+                            }
+                        }
+                    }
+                    .buttonStyle(.bordered)
 
                     Button("Reset View") {
                         viewerSettings.reset()
@@ -68,11 +112,33 @@ struct FlyWorldControlWindow: View {
                     Text("Movement")
                         .font(.headline)
 
-                    Text("If there is no live Documents pose packet, the viewer uses the packet's brain-state channels and arena objects to drive a six-leg contact locomotion fallback with grounded body support.")
+                    Text("If there is no live LAN stream or Documents pose packet, the viewer animates each fly from its brain-state channels using the bundled fallback.")
                         .foregroundStyle(.secondary)
+                }
 
-                    Text("To drive direct body motion, keep writing `vision_pro_pose_packet.json` or `fly_world_pose_packet.json` into the app Documents directory at roughly 15-30 Hz.")
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("LAN Pose Stream")
+                        .font(.headline)
+
+                    Text("Paste the URL printed by `run_live_multi_fly.py` (e.g. http://192.168.1.42:8765/pose). Leave empty to fall back to the bundled packet.")
                         .foregroundStyle(.secondary)
+                        .font(.footnote)
+
+                    TextField("http://<mac-lan-ip>:8765/pose", text: $viewerSettings.packetURL)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onChange(of: viewerSettings.packetURL) { _, newValue in
+                            sceneController.packetURLString = newValue
+                        }
+
+                    HStack(spacing: 8) {
+                        Button("Clear") {
+                            viewerSettings.packetURL = ""
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(viewerSettings.packetURL.isEmpty)
+                    }
                 }
 
                 Divider()
@@ -99,6 +165,7 @@ struct FlyWorldControlWindow: View {
             .padding(28)
         }
         .task {
+            sceneController.packetURLString = viewerSettings.packetURL
             sceneController.loadIfNeeded()
             sceneController.startPoseUpdates()
             guard !didAutoOpen else { return }

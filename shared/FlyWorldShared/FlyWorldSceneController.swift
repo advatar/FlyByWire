@@ -82,6 +82,7 @@ final class FlyWorldSceneController {
 
     private(set) var metadata: FlyWorldSceneMetadata?
     private(set) var errorMessage: String?
+    var packetURLString: String = ""
 
     init() {
         root.addChild(arenaRoot)
@@ -142,11 +143,21 @@ final class FlyWorldSceneController {
     private func runPoseLoop(bundle: Bundle) async {
         var frameIndex = 0
         while !Task.isCancelled {
-            if frameIndex.isMultiple(of: 8), let (packet, source) = FlyWorldPosePacket.loadPreferred(bundle: bundle) {
-                let signature = packetSignature(for: packet, source: source)
-                if signature != lastPacketSignature {
-                    apply(packet: packet, source: source)
-                    lastPacketSignature = signature
+            if frameIndex.isMultiple(of: 8) {
+                var refreshed: (FlyWorldPosePacket, FlyWorldPosePacketSource)?
+                let trimmedURL = packetURLString.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmedURL.isEmpty, let url = URL(string: trimmedURL) {
+                    refreshed = await FlyWorldPosePacket.loadFromURL(url)
+                }
+                if refreshed == nil {
+                    refreshed = FlyWorldPosePacket.loadPreferred(bundle: bundle)
+                }
+                if let (packet, source) = refreshed {
+                    let signature = packetSignature(for: packet, source: source)
+                    if signature != lastPacketSignature {
+                        apply(packet: packet, source: source)
+                        lastPacketSignature = signature
+                    }
                 }
             }
 
@@ -167,7 +178,12 @@ final class FlyWorldSceneController {
 
         latestPacket = packet
         latestPoseSource = source
-        motionMode = source?.label == "Documents pose packet" ? .directPose : .brainDrivenFallback
+        switch source?.label {
+        case "Documents pose packet", "LAN pose stream":
+            motionMode = .directPose
+        default:
+            motionMode = .brainDrivenFallback
+        }
         if motionMode == .brainDrivenFallback {
             resetBrainMotionControllers(for: packet, referenceTime: renderTime)
         }
@@ -379,6 +395,8 @@ final class FlyWorldSceneController {
 
         let color: PlatformColor
         switch behavior {
+        case "fly":
+            color = FlyWorldEntityFactory.color(0.62, 0.30, 0.96)
         case "feed":
             color = FlyWorldEntityFactory.color(0.98, 0.74, 0.22)
         case "escape":
@@ -686,7 +704,7 @@ private enum FlyWorldEntityFactory {
     )
     private static let unitCylinderMesh = MeshResource.generateCylinder(height: 1.0, radius: 1.0)
 
-    static func makeScene(graph: FlyWorldGraph) -> FlyWorldBuild {
+    static func makeScene(graph: FlyWorldGraph, includeBrainGraph: Bool = true, brainDetailScale: Float = 1.0) -> FlyWorldBuild {
         let sceneRoot = Entity()
         let poseAnchor = Entity()
         let flyRoot = Entity()
@@ -900,7 +918,14 @@ private enum FlyWorldEntityFactory {
             }
         }
 
-        let brain = makeBrainGraphEntity(graph)
+        let nodeBudget = max(8, Int(Float(80) * brainDetailScale))
+        let edgeBudget = max(16, Int(Float(150) * brainDetailScale))
+        let brain = makeBrainGraphEntity(
+            graph,
+            maxNodes: nodeBudget,
+            maxEdges: edgeBudget,
+            includeGraph: includeBrainGraph
+        )
         flyRoot.addChild(brain.root)
 
 #if os(visionOS)
@@ -1027,55 +1052,57 @@ private enum FlyWorldEntityFactory {
         return (rigs[0], rigs[1], rigs[2])
     }
 
-    private static func makeBrainGraphEntity(_ graph: FlyWorldGraph, maxNodes: Int = 420, maxEdges: Int = 1200) -> (root: Entity, halo: ModelEntity) {
+    private static func makeBrainGraphEntity(_ graph: FlyWorldGraph, maxNodes: Int = 80, maxEdges: Int = 150, includeGraph: Bool = true) -> (root: Entity, halo: ModelEntity) {
         let brainRoot = Entity()
         brainRoot.name = "BrainGraph"
         brainRoot.position = SIMD3<Float>(-0.195, 0.03, 0.0)
 
-        let nodeLimit = min(graph.nodes.count, maxNodes)
-        let limitedNodes = Array(graph.nodes.prefix(nodeLimit))
-        let brainScale: Float = 0.060
+        if includeGraph {
+            let nodeLimit = min(graph.nodes.count, maxNodes)
+            let limitedNodes = Array(graph.nodes.prefix(nodeLimit))
+            let brainScale: Float = 0.060
 
-        var positions: [SIMD3<Float>] = []
-        positions.reserveCapacity(limitedNodes.count)
-        for node in limitedNodes {
-            positions.append(node.position * brainScale)
-        }
+            var positions: [SIMD3<Float>] = []
+            positions.reserveCapacity(limitedNodes.count)
+            for node in limitedNodes {
+                positions.append(node.position * brainScale)
+            }
 
-        let edgeMaterial = UnlitMaterial(color: color(0.32, 0.75, 1.0))
-        let limitedEdges = graph.edges.prefix(maxEdges).filter {
-            $0.source >= 0 &&
-            $0.target >= 0 &&
-            $0.source < nodeLimit &&
-            $0.target < nodeLimit &&
-            $0.source != $0.target
-        }
+            let edgeMaterial = UnlitMaterial(color: color(0.32, 0.75, 1.0))
+            let limitedEdges = graph.edges.prefix(maxEdges).filter {
+                $0.source >= 0 &&
+                $0.target >= 0 &&
+                $0.source < nodeLimit &&
+                $0.target < nodeLimit &&
+                $0.source != $0.target
+            }
 
-        for (index, edge) in limitedEdges.enumerated() {
-            let start = positions[edge.source]
-            let end = positions[edge.target]
-            let strength = min(max(edge.strength ?? 0.35, 0.0), 1.0)
-            let edgeEntity = makeBone(
-                name: "BrainEdge\(index)",
-                from: start,
-                to: end,
-                radius: 0.0007 + strength * 0.0011,
-                material: edgeMaterial,
-                opacity: 0.24 + strength * 0.18
-            )
-            brainRoot.addChild(edgeEntity)
-        }
+            for (index, edge) in limitedEdges.enumerated() {
+                let start = positions[edge.source]
+                let end = positions[edge.target]
+                let strength = min(max(edge.strength ?? 0.35, 0.0), 1.0)
+                let edgeEntity = makeBone(
+                    name: "BrainEdge\(index)",
+                    from: start,
+                    to: end,
+                    radius: 0.0007 + strength * 0.0011,
+                    material: edgeMaterial,
+                    opacity: 0.24 + strength * 0.18
+                )
+                brainRoot.addChild(edgeEntity)
+            }
 
-        for (index, node) in limitedNodes.enumerated() {
-            let nodeColor = color(from: node.color, fallbackKind: (node.isFocus ?? false) ? "focus" : "graph")
-            let nodeMaterial = UnlitMaterial(color: nodeColor)
-            let radius = max(0.0024, (node.size ?? 0.020) * 0.20)
-            let nodeEntity = ModelEntity(mesh: unitSphereMesh, materials: [nodeMaterial])
-            nodeEntity.name = "BrainNode\(index)"
-            nodeEntity.position = positions[index]
-            nodeEntity.scale = SIMD3<Float>(repeating: radius)
-            nodeEntity.components.set(OpacityComponent(opacity: 0.92))
-            brainRoot.addChild(nodeEntity)
+            for (index, node) in limitedNodes.enumerated() {
+                let nodeColor = color(from: node.color, fallbackKind: (node.isFocus ?? false) ? "focus" : "graph")
+                let nodeMaterial = UnlitMaterial(color: nodeColor)
+                let radius = max(0.0024, (node.size ?? 0.020) * 0.20)
+                let nodeEntity = ModelEntity(mesh: unitSphereMesh, materials: [nodeMaterial])
+                nodeEntity.name = "BrainNode\(index)"
+                nodeEntity.position = positions[index]
+                nodeEntity.scale = SIMD3<Float>(repeating: radius)
+                nodeEntity.components.set(OpacityComponent(opacity: 0.92))
+                brainRoot.addChild(nodeEntity)
+            }
         }
 
         let halo = makeSphere(
