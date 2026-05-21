@@ -34,3 +34,6 @@
 - [x] Render multiple injected flies in the shared world viewer from an external packet stream.
 - [x] Add regression coverage and docs for the multi-fly packet workflow.
 - [x] Default the fly-world viewers to the current LearningToFly LAN pose stream IP.
+- [x] Make FlyBrainWorldVision compile and run on macOS while preserving visionOS volume and immersive modes.
+- [x] Verify FlyBrainWorldVision macOS and visionOS builds after the recommended Xcode settings update.
+- [x] Commit and push the FlyBrainWorldVision macOS compatibility fix.

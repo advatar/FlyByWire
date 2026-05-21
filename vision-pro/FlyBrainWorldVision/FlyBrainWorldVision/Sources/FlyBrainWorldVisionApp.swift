@@ -21,6 +21,7 @@ struct FlyBrainWorldVisionApp: App {
         }
         .defaultSize(width: 460, height: 720)
 
+#if os(visionOS)
         WindowGroup(id: Self.volumeWindowID) {
             FlyWorldVolumeView(
                 sceneController: sceneController,
@@ -39,5 +40,15 @@ struct FlyBrainWorldVisionApp: App {
             )
         }
         .immersionStyle(selection: .constant(.mixed), in: .mixed)
+#else
+        WindowGroup(id: Self.volumeWindowID) {
+            FlyWorldVolumeView(
+                sceneController: sceneController,
+                controlsWindowID: Self.controlsWindowID,
+                viewerSettings: viewerSettings
+            )
+        }
+        .defaultSize(width: 1000, height: 760)
+#endif
     }
 }

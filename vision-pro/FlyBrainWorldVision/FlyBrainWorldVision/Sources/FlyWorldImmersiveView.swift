@@ -1,3 +1,4 @@
+#if os(visionOS)
 import ARKit
 import RealityKit
 import SwiftUI
@@ -70,3 +71,4 @@ struct FlyWorldImmersiveView: View {
         }
     }
 }
+#endif

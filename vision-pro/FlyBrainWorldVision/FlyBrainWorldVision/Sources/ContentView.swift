@@ -9,6 +9,24 @@ struct FlyWorldVolumeView: View {
     @Bindable var viewerSettings: FlyWorldViewerSettings
 
     var body: some View {
+        flyWorldScene
+#if os(visionOS)
+            .ornament(attachmentAnchor: .scene(.bottom), contentAlignment: .center) {
+                controlsButton
+                    .padding(12)
+                    .glassBackgroundEffect()
+            }
+#else
+            .overlay(alignment: .bottom) {
+                controlsButton
+                    .padding(12)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                    .padding()
+            }
+#endif
+    }
+
+    private var flyWorldScene: some View {
         RealityView { content in
             sceneController.loadIfNeeded()
             sceneController.startPoseUpdates()
@@ -19,16 +37,15 @@ struct FlyWorldVolumeView: View {
         } placeholder: {
             ProgressView("Building fly world...")
         }
-        .ornament(attachmentAnchor: .scene(.bottom), contentAlignment: .center) {
-            Button {
-                openWindow(id: controlsWindowID)
-            } label: {
-                Label("Show Controls", systemImage: "slider.horizontal.3")
-            }
-            .buttonStyle(.borderedProminent)
-            .padding(12)
-            .glassBackgroundEffect()
+    }
+
+    private var controlsButton: some View {
+        Button {
+            openWindow(id: controlsWindowID)
+        } label: {
+            Label("Show Controls", systemImage: "slider.horizontal.3")
         }
+        .buttonStyle(.borderedProminent)
     }
 
     private func updateScenePlacement() {
@@ -41,8 +58,10 @@ struct FlyWorldVolumeView: View {
 struct FlyWorldControlWindow: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
+#if os(visionOS)
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
+#endif
 
     let volumeWindowID: String
     let controlsWindowID: String
@@ -51,7 +70,9 @@ struct FlyWorldControlWindow: View {
     @Bindable var viewerSettings: FlyWorldViewerSettings
 
     @State private var didAutoOpen = false
+#if os(visionOS)
     @State private var roomModeActive = false
+#endif
 
     var body: some View {
         ScrollView {
@@ -68,15 +89,16 @@ struct FlyWorldControlWindow: View {
                     .buttonStyle(.bordered)
                 }
 
-                Text("Dedicated Vision Pro whole-fly viewer with a separate control window. Hide this panel any time — bring it back from the Show Controls button under the fly volume.")
+                Text(introduction)
                     .foregroundStyle(.secondary)
 
                 HStack(spacing: 12) {
-                    Button("Open Fly Volume") {
+                    Button(openViewerTitle) {
                         openWindow(id: volumeWindowID)
                     }
                     .buttonStyle(.borderedProminent)
 
+#if os(visionOS)
                     Button(roomModeActive ? "Exit Room Mode" : "Enter Room Mode", systemImage: roomModeActive ? "rectangle.portrait.and.arrow.right" : "arkit") {
                         Task {
                             if roomModeActive {
@@ -92,6 +114,7 @@ struct FlyWorldControlWindow: View {
                         }
                     }
                     .buttonStyle(.bordered)
+#endif
 
                     Button("Reset View") {
                         viewerSettings.reset()
@@ -124,13 +147,7 @@ struct FlyWorldControlWindow: View {
                         .foregroundStyle(.secondary)
                         .font(.footnote)
 
-                    TextField(FlyWorldSceneController.defaultPacketURLString, text: $viewerSettings.packetURL)
-                        .textFieldStyle(.roundedBorder)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .onChange(of: viewerSettings.packetURL) { _, newValue in
-                            sceneController.packetURLString = newValue
-                        }
+                    packetURLTextField
 
                     HStack(spacing: 8) {
                         Button("Clear") {
@@ -172,6 +189,41 @@ struct FlyWorldControlWindow: View {
             didAutoOpen = true
             openWindow(id: volumeWindowID)
         }
+    }
+
+    private var introduction: String {
+#if os(visionOS)
+        "Dedicated Vision Pro whole-fly viewer with a separate control window. Hide this panel any time; bring it back from the Show Controls button under the fly volume."
+#else
+        "macOS whole-fly viewer with a separate control window. Hide this panel any time; bring it back from the Show Controls button at the bottom of the fly viewer."
+#endif
+    }
+
+    private var openViewerTitle: String {
+#if os(visionOS)
+        "Open Fly Volume"
+#else
+        "Open Fly Viewer"
+#endif
+    }
+
+    private var packetURLTextField: some View {
+#if os(visionOS)
+        TextField(FlyWorldSceneController.defaultPacketURLString, text: $viewerSettings.packetURL)
+            .textFieldStyle(.roundedBorder)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .onChange(of: viewerSettings.packetURL) { _, newValue in
+                sceneController.packetURLString = newValue
+            }
+#else
+        TextField(FlyWorldSceneController.defaultPacketURLString, text: $viewerSettings.packetURL)
+            .textFieldStyle(.roundedBorder)
+            .autocorrectionDisabled()
+            .onChange(of: viewerSettings.packetURL) { _, newValue in
+                sceneController.packetURLString = newValue
+            }
+#endif
     }
 }
 
