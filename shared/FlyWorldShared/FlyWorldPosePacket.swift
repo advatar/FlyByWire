@@ -49,6 +49,7 @@ struct FlyWorldPosePacket: Decodable {
     let behavior: String
     let worldObjects: [WorldObject]?
     let agents: [Agent]?
+    let channelAliases: [String: String]?
 
     init(
         timestamp: Double,
@@ -58,7 +59,8 @@ struct FlyWorldPosePacket: Decodable {
         brainState: [String: Float],
         behavior: String,
         worldObjects: [WorldObject]?,
-        agents: [Agent]? = nil
+        agents: [Agent]? = nil,
+        channelAliases: [String: String]? = nil
     ) {
         self.timestamp = timestamp
         self.rootPositionMm = rootPositionMm
@@ -68,6 +70,7 @@ struct FlyWorldPosePacket: Decodable {
         self.behavior = behavior
         self.worldObjects = worldObjects
         self.agents = agents
+        self.channelAliases = channelAliases
     }
 
     var rootPositionVector: SIMD3<Float> {
@@ -98,7 +101,8 @@ struct FlyWorldPosePacket: Decodable {
             brainState: agent.brainState,
             behavior: agent.behavior,
             worldObjects: worldObjects,
-            agents: nil
+            agents: nil,
+            channelAliases: channelAliases
         )
     }
 

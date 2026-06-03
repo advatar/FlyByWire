@@ -1,9 +1,9 @@
 {
-  "timestamp": 1779352741.8788512,
+  "timestamp": 1779419958.4175282,
   "root_position_mm": [
     -10.0,
     10.0,
-    12.128
+    13.932
   ],
   "root_quaternion_xyzw": [
     0.0,
@@ -28,7 +28,7 @@
       "root_position_mm": [
         -10.0,
         10.0,
-        12.128
+        13.932
       ],
       "root_quaternion_xyzw": [
         0.0,
@@ -55,7 +55,7 @@
       "root_position_mm": [
         0.0,
         10.0,
-        13.248
+        13.704
       ],
       "root_quaternion_xyzw": [
         0.0,
@@ -82,7 +82,7 @@
       "root_position_mm": [
         10.0,
         10.0,
-        15.272
+        15.472
       ],
       "root_quaternion_xyzw": [
         0.0,
@@ -109,7 +109,7 @@
       "root_position_mm": [
         -10.0,
         0.0,
-        14.924
+        14.452
       ],
       "root_quaternion_xyzw": [
         0.0,
@@ -136,7 +136,7 @@
       "root_position_mm": [
         0.0,
         0.0,
-        13.852
+        14.976
       ],
       "root_quaternion_xyzw": [
         0.0,
@@ -163,7 +163,7 @@
       "root_position_mm": [
         10.0,
         0.0,
-        15.344
+        12.12
       ],
       "root_quaternion_xyzw": [
         0.0,
@@ -190,7 +190,7 @@
       "root_position_mm": [
         -10.0,
         -10.0,
-        12.644
+        13.16
       ],
       "root_quaternion_xyzw": [
         0.0,

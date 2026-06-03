@@ -204,17 +204,27 @@ final class FlyWorldSceneController {
     private func resolveMotionFrame(
         packet: FlyWorldPosePacket,
         time: TimeInterval,
-        agentID: String
+        agentID: String,
+        neighborsMm: [SIMD2<Float>] = []
     ) -> FlyWorldMotionFrame {
         switch motionMode {
         case .directPose:
             return FlyWorldMotionFrame.directPose(packet: packet, time: time)
         case .brainDrivenFallback:
             var controller = brainMotionControllers[agentID] ?? FlyWorldBrainDrivenMotionController()
-            let motion = controller.synthesize(packet: packet, time: time)
+            let motion = controller.synthesize(packet: packet, time: time, neighborsMm: neighborsMm)
             brainMotionControllers[agentID] = controller
             return motion
         }
+    }
+
+    private func neighborPositions(excluding agentID: String) -> [SIMD2<Float>] {
+        var result: [SIMD2<Float>] = []
+        result.reserveCapacity(brainMotionControllers.count)
+        for (id, controller) in brainMotionControllers where id != agentID {
+            result.append(controller.currentPlanarPositionMm)
+        }
+        return result
     }
 
     private func render(packet: FlyWorldPosePacket, time: TimeInterval) -> String {
@@ -223,7 +233,13 @@ final class FlyWorldSceneController {
         var primaryBehavior = packet.behavior
         for (index, agent) in packet.displayAgents.enumerated() {
             let agentPacket = packet.packet(for: agent)
-            let motion = resolveMotionFrame(packet: agentPacket, time: time, agentID: agent.id)
+            let neighbors = neighborPositions(excluding: agent.id)
+            let motion = resolveMotionFrame(
+                packet: agentPacket,
+                time: time,
+                agentID: agent.id,
+                neighborsMm: neighbors
+            )
             guard let build = rig(for: agent, index: index) else { continue }
             applyRootTransform(motion: motion, rig: build)
             applyBehaviorState(packet: agentPacket, motion: motion, rig: build)
@@ -233,6 +249,13 @@ final class FlyWorldSceneController {
         }
 
         return primaryBehavior
+    }
+
+    private func phaseSeed(for agentID: String) -> Float {
+        var hasher = Hasher()
+        hasher.combine(agentID)
+        let hash = UInt32(truncatingIfNeeded: hasher.finalize())
+        return Float(hash % 6283) / 1000.0  // 0 .. ~6.28 rad
     }
 
     private func rig(for agent: FlyWorldPosePacket.Agent, index: Int) -> FlyWorldBuild? {
@@ -269,6 +292,7 @@ final class FlyWorldSceneController {
 
         for agent in activeAgents {
             var controller = brainMotionControllers[agent.id] ?? FlyWorldBrainDrivenMotionController()
+            controller.phaseSeed = phaseSeed(for: agent.id)
             controller.reset(using: packet.packet(for: agent), referenceTime: referenceTime)
             brainMotionControllers[agent.id] = controller
         }
@@ -283,8 +307,19 @@ final class FlyWorldSceneController {
         )
 
         let packetOrientation = motion.rootQuaternion
-        rig.poseAnchor.orientation =
+        var orientation =
             simulationToSceneRotation * packetOrientation * simulationToSceneRotation.inverse
+
+        if motion.behavior == "fly" {
+            // Bank into the turn: tilt the body about its forward axis
+            // proportionally to the current turn rate, clamped to ~±18°.
+            let turnRate = motion.leftStrideDrive - motion.rightStrideDrive
+            let rollMagnitude = max(-0.32, min(0.32, turnRate * 0.55))
+            let forwardAxisScene = orientation.act(SIMD3<Float>(1.0, 0.0, 0.0))
+            orientation = simd_quatf(angle: -rollMagnitude, axis: forwardAxisScene) * orientation
+        }
+
+        rig.poseAnchor.orientation = orientation
     }
 
     private func applyBehaviorState(
@@ -305,11 +340,13 @@ final class FlyWorldSceneController {
         }
 
         applyProboscis(rig: rig, feedDrive: motion.feedDrive, phase: phase)
+        let turnBias = motion.leftStrideDrive - motion.rightStrideDrive
         applyWingMotion(
             rig: rig,
             behavior: motion.behavior,
             escapeDrive: motion.escapeDrive,
             strideDrive: (motion.leftStrideDrive + motion.rightStrideDrive) * 0.5,
+            turnBias: turnBias,
             phase: phase
         )
         applyBrainHalo(rig: rig, brainDrive: motion.brainDrive, behavior: motion.behavior, phase: phase)
@@ -365,6 +402,7 @@ final class FlyWorldSceneController {
         behavior: String,
         escapeDrive: Float,
         strideDrive: Float,
+        turnBias: Float,
         phase: Float
     ) {
         let flapDrive = FlyWorldPresentationTuning.wingFlapDrive(
@@ -377,12 +415,17 @@ final class FlyWorldSceneController {
             strideDrive: strideDrive
         )
         let flap = flapDrive * sin(phase * flapFrequency)
+        // Banking: when leftStride > rightStride the fly turns right; the
+        // inside (right) wing strokes shallower than the outside (left).
+        let clampedBias = max(-1.0, min(1.0, turnBias))
+        let leftGain: Float = 0.35 * (1.0 + clampedBias * 0.4)
+        let rightGain: Float = 0.35 * (1.0 - clampedBias * 0.4)
         rig.leftWing.orientation =
             rig.leftWingBaseOrientation
-            * simd_quatf(angle: flap * 0.35, axis: SIMD3<Float>(0.0, 0.0, 1.0))
+            * simd_quatf(angle: flap * leftGain, axis: SIMD3<Float>(0.0, 0.0, 1.0))
         rig.rightWing.orientation =
             rig.rightWingBaseOrientation
-            * simd_quatf(angle: -flap * 0.35, axis: SIMD3<Float>(0.0, 0.0, 1.0))
+            * simd_quatf(angle: -flap * rightGain, axis: SIMD3<Float>(0.0, 0.0, 1.0))
     }
 
     private func applyBrainHalo(

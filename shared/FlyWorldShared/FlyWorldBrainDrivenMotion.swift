@@ -9,13 +9,14 @@ struct FlyWorldDescendingSignals: Equatable {
     let feedDrive: Float
     let escapeDrive: Float
 
-    init(brainState: [String: Float]) {
-        forwardDrive = Self.drive(from: brainState, keys: ["oDN1", "P9_oDN1", "forward_drive", "locomotion_drive", "walk_drive"])
-        leftTurnDrive = Self.drive(from: brainState, keys: ["DNa01", "turn_left_drive", "left_drive"])
-        rightTurnDrive = Self.drive(from: brainState, keys: ["DNa02", "turn_right_drive", "right_drive"])
-        groomDrive = Self.drive(from: brainState, keys: ["aDN1", "groom_drive", "instinct_groom"])
-        feedDrive = Self.drive(from: brainState, keys: ["MN9", "feed_drive", "instinct_feed", "sugar_contact"])
-        escapeDrive = Self.drive(from: brainState, keys: ["loom_escape", "escape_drive", "instinct_escape", "MDN"])
+    init(brainState: [String: Float], channelAliases: [String: String] = [:]) {
+        let resolved = Self.resolveAliases(brainState, aliases: channelAliases)
+        forwardDrive = Self.drive(from: resolved, keys: ["oDN1", "P9_oDN1", "forward_drive", "locomotion_drive", "walk_drive"])
+        leftTurnDrive = Self.drive(from: resolved, keys: ["DNa01", "turn_left_drive", "left_drive"])
+        rightTurnDrive = Self.drive(from: resolved, keys: ["DNa02", "turn_right_drive", "right_drive"])
+        groomDrive = Self.drive(from: resolved, keys: ["aDN1", "groom_drive", "instinct_groom"])
+        feedDrive = Self.drive(from: resolved, keys: ["MN9", "feed_drive", "instinct_feed", "sugar_contact"])
+        escapeDrive = Self.drive(from: resolved, keys: ["loom_escape", "escape_drive", "instinct_escape", "MDN"])
     }
 
     var locomotionDrive: Float {
@@ -32,6 +33,22 @@ struct FlyWorldDescendingSignals: Equatable {
     private static func drive(from brainState: [String: Float], keys: [String]) -> Float {
         let value = keys.compactMap { brainState[$0] }.max() ?? 0.0
         return clamp(value, min: 0.0, max: 1.5)
+    }
+
+    /// Apply channel aliases (e.g. VFB short forms -> canonical channel names)
+    /// before reading the descending signal map.
+    private static func resolveAliases(
+        _ brainState: [String: Float],
+        aliases: [String: String]
+    ) -> [String: Float] {
+        if aliases.isEmpty { return brainState }
+        var merged = brainState
+        for (alias, canonical) in aliases {
+            if let value = brainState[alias], merged[canonical] == nil {
+                merged[canonical] = value
+            }
+        }
+        return merged
     }
 }
 
@@ -481,7 +498,7 @@ struct FlyWorldMotionFrame {
         packet: FlyWorldPosePacket,
         time: TimeInterval
     ) -> FlyWorldMotionFrame {
-        let descending = FlyWorldDescendingSignals(brainState: packet.brainState)
+        let descending = FlyWorldDescendingSignals(brainState: packet.brainState, channelAliases: packet.channelAliases ?? [:])
         let behavior = FlyWorldBehaviorResolver.resolvedBehavior(
             packetBehavior: packet.behavior,
             descending: descending
@@ -517,6 +534,12 @@ struct FlyWorldBrainDrivenMotionController {
     private var footholdAnchorsMm: [FlyWorldLegID: SIMD2<Float>] = [:]
     private var supportState: [FlyWorldLegID: Bool] = [:]
     private var isSeeded = false
+    var lastTurnVelocityRadPerSec: Float = 0.0
+    var phaseSeed: Float = 0.0
+
+    var currentPlanarPositionMm: SIMD2<Float> {
+        SIMD2<Float>(positionMm.x, positionMm.y)
+    }
 
     mutating func reset(
         using packet: FlyWorldPosePacket,
@@ -540,14 +563,15 @@ struct FlyWorldBrainDrivenMotionController {
 
     mutating func synthesize(
         packet: FlyWorldPosePacket,
-        time: TimeInterval
+        time: TimeInterval,
+        neighborsMm: [SIMD2<Float>] = []
     ) -> FlyWorldMotionFrame {
         if !isSeeded {
             reset(using: packet, referenceTime: time)
         }
 
         let dt = resolvedStepDuration(currentTime: time)
-        let descending = FlyWorldDescendingSignals(brainState: packet.brainState)
+        let descending = FlyWorldDescendingSignals(brainState: packet.brainState, channelAliases: packet.channelAliases ?? [:])
         let behavior = FlyWorldBehaviorResolver.resolvedBehavior(
             packetBehavior: packet.behavior,
             descending: descending
@@ -560,8 +584,14 @@ struct FlyWorldBrainDrivenMotionController {
             currentHeading: heading
         )
 
-        heading = wrapAngle(heading + command.turnVelocityRadPerSecond * dt)
+        // In fly mode, clamp the descending turn velocity so a slightly
+        // asymmetric brain state does not produce indefinite orbiting.
+        let appliedTurnVelocity: Float = behavior == "fly"
+            ? clamp(command.turnVelocityRadPerSecond, min: -0.5, max: 0.5)
+            : command.turnVelocityRadPerSecond
+        heading = wrapAngle(heading + appliedTurnVelocity * dt)
         gaitPhase = wrapAngle(gaitPhase + command.gaitAngularSpeed * dt)
+        lastTurnVelocityRadPerSec = appliedTurnVelocity
 
         let poses = currentLegPoses(
             packet: packet,
@@ -579,7 +609,23 @@ struct FlyWorldBrainDrivenMotionController {
             let flightSpeedMmPerSec: Float = 45.0
             let driveSum = (command.leftStrideDrive + command.rightStrideDrive) * 0.5
             let effectiveDrive = clamp(max(driveSum, descending.forwardDrive * 0.6), min: 0.18, max: 1.4)
-            let velocity = SIMD2<Float>(cos(heading), sin(heading)) * (effectiveDrive * flightSpeedMmPerSec)
+            var velocity = SIMD2<Float>(cos(heading), sin(heading)) * (effectiveDrive * flightSpeedMmPerSec)
+
+            // Reynolds-style separation: nudge away from any neighbor that is
+            // close in XY so flies do not ghost through each other.
+            let separationRadiusMm: Float = 28.0
+            let separationStrength: Float = 24.0
+            var separation = SIMD2<Float>(0.0, 0.0)
+            for neighbor in neighborsMm {
+                let delta = planarPosition - neighbor
+                let dist = simd_length(delta)
+                if dist > 0.0001 && dist < separationRadiusMm {
+                    let weight = (separationRadiusMm - dist) / separationRadiusMm
+                    separation += (delta / dist) * (weight * separationStrength)
+                }
+            }
+            velocity += separation
+
             planarPosition += velocity * Float(dt)
 
             let maxRadiusMm: Float = 160.0
@@ -629,8 +675,12 @@ struct FlyWorldBrainDrivenMotionController {
         if behavior == "fly" {
             let packetAltitude = packet.rootPositionVector.z
             let baseAltitude = packetAltitude > 0.5 ? packetAltitude : 12.0
-            let bob = sin(Float(time) * 3.5) * 1.5
-            targetHeightMm = baseAltitude + bob
+            let t = Float(time)
+            // Layered sines with per-agent phase make each fly bob fast while
+            // slowly diving and climbing.
+            let bob = sin(t * 3.5 + phaseSeed) * 1.5
+            let wander = sin(t * 0.45 + phaseSeed * 1.7) * 4.0
+            targetHeightMm = baseAltitude + bob + wander
         } else {
             targetHeightMm = FlyWorldLegKinematics.supportRootHeightMm(for: poses)
         }
@@ -657,7 +707,7 @@ struct FlyWorldBrainDrivenMotionController {
     }
 
     private mutating func seedSupportState(using packet: FlyWorldPosePacket) {
-        let descending = FlyWorldDescendingSignals(brainState: packet.brainState)
+        let descending = FlyWorldDescendingSignals(brainState: packet.brainState, channelAliases: packet.channelAliases ?? [:])
         let behavior = FlyWorldBehaviorResolver.resolvedBehavior(
             packetBehavior: packet.behavior,
             descending: descending
