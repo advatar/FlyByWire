@@ -6,6 +6,7 @@ struct FlyWorldVolumeView: View {
 
     let sceneController: FlyWorldSceneController
     let controlsWindowID: String
+    let controlsWindowValue: FlyWorldWindowRoute
     @Bindable var viewerSettings: FlyWorldViewerSettings
 
     var body: some View {
@@ -41,7 +42,7 @@ struct FlyWorldVolumeView: View {
 
     private var controlsButton: some View {
         Button {
-            openWindow(id: controlsWindowID)
+            openWindow(id: controlsWindowID, value: controlsWindowValue)
         } label: {
             Label("Show Controls", systemImage: "slider.horizontal.3")
         }
@@ -66,6 +67,8 @@ struct FlyWorldControlWindow: View {
     let volumeWindowID: String
     let controlsWindowID: String
     let immersiveSpaceID: String
+    let volumeWindowValue: FlyWorldWindowRoute
+    let controlsWindowValue: FlyWorldWindowRoute
     let sceneController: FlyWorldSceneController
     @Bindable var viewerSettings: FlyWorldViewerSettings
 
@@ -82,7 +85,7 @@ struct FlyWorldControlWindow: View {
                         .font(.largeTitle.weight(.semibold))
                     Spacer()
                     Button {
-                        dismissWindow(id: controlsWindowID)
+                        dismissWindow(id: controlsWindowID, value: controlsWindowValue)
                     } label: {
                         Label("Hide", systemImage: "eye.slash")
                     }
@@ -94,7 +97,7 @@ struct FlyWorldControlWindow: View {
 
                 HStack(spacing: 12) {
                     Button(openViewerTitle) {
-                        openWindow(id: volumeWindowID)
+                        openWindow(id: volumeWindowID, value: volumeWindowValue)
                     }
                     .buttonStyle(.borderedProminent)
 
@@ -108,7 +111,7 @@ struct FlyWorldControlWindow: View {
                                 let result = await openImmersiveSpace(id: immersiveSpaceID)
                                 if case .opened = result {
                                     roomModeActive = true
-                                    dismissWindow(id: volumeWindowID)
+                                    dismissWindow(id: volumeWindowID, value: volumeWindowValue)
                                 }
                             }
                         }
@@ -187,7 +190,7 @@ struct FlyWorldControlWindow: View {
             sceneController.startPoseUpdates()
             guard !didAutoOpen else { return }
             didAutoOpen = true
-            openWindow(id: volumeWindowID)
+            openWindow(id: volumeWindowID, value: volumeWindowValue)
         }
     }
 
