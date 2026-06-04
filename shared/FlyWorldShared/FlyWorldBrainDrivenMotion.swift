@@ -526,6 +526,130 @@ struct FlyWorldMotionFrame {
     }
 }
 
+enum FlyWorldFlightTuning {
+    static let arenaRadiusMm: Float = 150.0
+    static let collisionRadiusMm: Float = 18.0
+    static let avoidanceRadiusMm: Float = 42.0
+}
+
+struct FlyWorldAgentCollisionResolution: Equatable {
+    let position: SIMD2<Float>
+    let avoidanceVector: SIMD2<Float>
+    let collisionCount: Int
+}
+
+enum FlyWorldAgentCollisionResolver {
+    static func avoidanceVelocity(
+        currentPosition: SIMD2<Float>,
+        neighbors: [SIMD2<Float>],
+        phaseSeed: Float,
+        collisionRadiusMm: Float = FlyWorldFlightTuning.collisionRadiusMm,
+        avoidanceRadiusMm: Float = FlyWorldFlightTuning.avoidanceRadiusMm
+    ) -> SIMD2<Float> {
+        let minimumDistance = collisionRadiusMm * 2.0
+        var velocity = SIMD2<Float>(repeating: 0.0)
+
+        for (index, neighbor) in neighbors.enumerated() {
+            let delta = currentPosition - neighbor
+            let distance = simd_length(delta)
+            guard distance < avoidanceRadiusMm else { continue }
+
+            let direction = normalizedOrSeeded(delta, phaseSeed: phaseSeed + Float(index) * 0.37)
+            let hardCollisionWeight = clamp((minimumDistance - distance) / minimumDistance, min: 0.0, max: 1.0)
+            let softAvoidanceWeight = clamp((avoidanceRadiusMm - distance) / avoidanceRadiusMm, min: 0.0, max: 1.0)
+            velocity += direction * (softAvoidanceWeight * 28.0 + hardCollisionWeight * 52.0)
+        }
+
+        return velocity
+    }
+
+    static func resolvedPlanarPosition(
+        proposedPosition: SIMD2<Float>,
+        neighbors: [SIMD2<Float>],
+        phaseSeed: Float,
+        collisionRadiusMm: Float = FlyWorldFlightTuning.collisionRadiusMm
+    ) -> FlyWorldAgentCollisionResolution {
+        let minimumDistance = collisionRadiusMm * 2.0
+        var candidate = proposedPosition
+        var accumulatedAvoidance = SIMD2<Float>(repeating: 0.0)
+        var collisionCount = 0
+
+        for _ in 0..<3 {
+            var changed = false
+            for (index, neighbor) in neighbors.enumerated() {
+                let delta = candidate - neighbor
+                let distance = simd_length(delta)
+                guard distance < minimumDistance else { continue }
+
+                let direction = normalizedOrSeeded(delta, phaseSeed: phaseSeed + Float(index) * 0.53)
+                let push = minimumDistance - distance
+                candidate += direction * push
+                accumulatedAvoidance += direction * push
+                collisionCount += 1
+                changed = true
+            }
+
+            if !changed {
+                break
+            }
+        }
+
+        return FlyWorldAgentCollisionResolution(
+            position: candidate,
+            avoidanceVector: accumulatedAvoidance,
+            collisionCount: collisionCount
+        )
+    }
+
+    private static func normalizedOrSeeded(
+        _ vector: SIMD2<Float>,
+        phaseSeed: Float
+    ) -> SIMD2<Float> {
+        let length = simd_length(vector)
+        guard length > 0.0001 else {
+            let angle = phaseSeed * 12.9898 + 0.731
+            return SIMD2<Float>(cos(angle), sin(angle))
+        }
+        return vector / length
+    }
+}
+
+enum FlyWorldFlightRandomizer {
+    static func initialHeadingOffset(phaseSeed: Float) -> Float {
+        (seededUnit(phaseSeed: phaseSeed, salt: 0.19) - 0.5) * Float.pi * 0.85
+    }
+
+    static func turnVelocity(
+        time: TimeInterval,
+        phaseSeed: Float,
+        drive: Float
+    ) -> Float {
+        let t = Float(time)
+        let driveScale = 0.48 + clamp(drive, min: 0.0, max: 1.2) * 0.26
+        let slow = sin(t * (0.31 + seededUnit(phaseSeed: phaseSeed, salt: 1.1) * 0.18) + phaseSeed * 1.7)
+        let mid = sin(t * (0.83 + seededUnit(phaseSeed: phaseSeed, salt: 2.3) * 0.24) + phaseSeed * 3.1)
+        let pulse = sin(t * (1.61 + seededUnit(phaseSeed: phaseSeed, salt: 4.7) * 0.36) + phaseSeed * 5.3)
+
+        return (slow * 0.38 + mid * 0.22 + pulse * 0.08) * driveScale
+    }
+
+    static func lateralVelocity(
+        time: TimeInterval,
+        phaseSeed: Float,
+        speedMmPerSecond: Float
+    ) -> Float {
+        let t = Float(time)
+        let weave = sin(t * (0.52 + seededUnit(phaseSeed: phaseSeed, salt: 7.0) * 0.21) + phaseSeed * 2.4)
+        let gust = sin(t * (1.17 + seededUnit(phaseSeed: phaseSeed, salt: 8.0) * 0.27) + phaseSeed * 4.9)
+        return (weave * 0.20 + gust * 0.08) * speedMmPerSecond
+    }
+
+    private static func seededUnit(phaseSeed: Float, salt: Float) -> Float {
+        let value = sin(phaseSeed * 12.9898 + salt * 78.233) * 43758.5453
+        return value - floor(value)
+    }
+}
+
 struct FlyWorldBrainDrivenMotionController {
     private var positionMm = SIMD3<Float>(0.0, 0.0, 0.2)
     private var heading: Float = 0.0
@@ -546,13 +670,23 @@ struct FlyWorldBrainDrivenMotionController {
         referenceTime: TimeInterval
     ) {
         positionMm = packet.rootPositionVector
+        let descending = FlyWorldDescendingSignals(brainState: packet.brainState, channelAliases: packet.channelAliases ?? [:])
+        let behavior = FlyWorldBehaviorResolver.resolvedBehavior(
+            packetBehavior: packet.behavior,
+            descending: descending
+        )
+        let arenaRadius = behavior == "fly" ? FlyWorldFlightTuning.arenaRadiusMm : FlyWorldLegKinematics.arenaRadiusMm
         let clampedPlanarPosition = clampedPlanarPosition(
             SIMD2<Float>(positionMm.x, positionMm.y),
+            insideArenaRadius: arenaRadius,
             objects: packet.worldObjectsOrDefault
         )
         positionMm.x = clampedPlanarPosition.x
         positionMm.y = clampedPlanarPosition.y
         heading = headingFromSimulationQuaternion(packet.rootQuaternion)
+        if behavior == "fly" {
+            heading = wrapAngle(heading + FlyWorldFlightRandomizer.initialHeadingOffset(phaseSeed: phaseSeed))
+        }
         gaitPhase = 0.0
         lastStepTime = referenceTime
         footholdAnchorsMm.removeAll(keepingCapacity: true)
@@ -584,11 +718,19 @@ struct FlyWorldBrainDrivenMotionController {
             currentHeading: heading
         )
 
-        // In fly mode, clamp the descending turn velocity so a slightly
-        // asymmetric brain state does not produce indefinite orbiting.
-        let appliedTurnVelocity: Float = behavior == "fly"
-            ? clamp(command.turnVelocityRadPerSecond, min: -0.5, max: 0.5)
+        // In fly mode, heavily damp persistent descending turn bias and layer
+        // in seeded wander. This keeps agent motion brain-influenced without
+        // letting a tiny left/right imbalance become endless circles.
+        var appliedTurnVelocity: Float = behavior == "fly"
+            ? clamp(command.turnVelocityRadPerSecond, min: -0.24, max: 0.24)
             : command.turnVelocityRadPerSecond
+        if behavior == "fly" {
+            appliedTurnVelocity += FlyWorldFlightRandomizer.turnVelocity(
+                time: time,
+                phaseSeed: phaseSeed,
+                drive: command.brainDrive
+            )
+        }
         heading = wrapAngle(heading + appliedTurnVelocity * dt)
         gaitPhase = wrapAngle(gaitPhase + command.gaitAngularSpeed * dt)
         lastTurnVelocityRadPerSec = appliedTurnVelocity
@@ -609,26 +751,35 @@ struct FlyWorldBrainDrivenMotionController {
             let flightSpeedMmPerSec: Float = 45.0
             let driveSum = (command.leftStrideDrive + command.rightStrideDrive) * 0.5
             let effectiveDrive = clamp(max(driveSum, descending.forwardDrive * 0.6), min: 0.18, max: 1.4)
-            var velocity = SIMD2<Float>(cos(heading), sin(heading)) * (effectiveDrive * flightSpeedMmPerSec)
+            let forward = SIMD2<Float>(cos(heading), sin(heading))
+            let lateral = SIMD2<Float>(-forward.y, forward.x)
+            let flightSpeed = effectiveDrive * flightSpeedMmPerSec
+            var velocity = forward * flightSpeed
+            velocity += lateral * FlyWorldFlightRandomizer.lateralVelocity(
+                time: time,
+                phaseSeed: phaseSeed,
+                speedMmPerSecond: flightSpeed
+            )
+            velocity += FlyWorldAgentCollisionResolver.avoidanceVelocity(
+                currentPosition: planarPosition,
+                neighbors: neighborsMm,
+                phaseSeed: phaseSeed
+            )
 
-            // Reynolds-style separation: nudge away from any neighbor that is
-            // close in XY so flies do not ghost through each other.
-            let separationRadiusMm: Float = 28.0
-            let separationStrength: Float = 24.0
-            var separation = SIMD2<Float>(0.0, 0.0)
-            for neighbor in neighborsMm {
-                let delta = planarPosition - neighbor
-                let dist = simd_length(delta)
-                if dist > 0.0001 && dist < separationRadiusMm {
-                    let weight = (separationRadiusMm - dist) / separationRadiusMm
-                    separation += (delta / dist) * (weight * separationStrength)
-                }
+            let proposedPlanarPosition = planarPosition + velocity * Float(dt)
+            let collisionResolution = FlyWorldAgentCollisionResolver.resolvedPlanarPosition(
+                proposedPosition: proposedPlanarPosition,
+                neighbors: neighborsMm,
+                phaseSeed: phaseSeed
+            )
+            planarPosition = collisionResolution.position
+            if simd_length_squared(collisionResolution.avoidanceVector) > 0.0001 {
+                let avoidanceHeading = atan2(collisionResolution.avoidanceVector.y, collisionResolution.avoidanceVector.x)
+                let headingDelta = wrapAngle(avoidanceHeading - heading)
+                heading = wrapAngle(heading + clamp(headingDelta, min: -2.8 * dt, max: 2.8 * dt))
             }
-            velocity += separation
 
-            planarPosition += velocity * Float(dt)
-
-            let maxRadiusMm: Float = 160.0
+            let maxRadiusMm = FlyWorldFlightTuning.arenaRadiusMm
             let radius = simd_length(planarPosition)
             if radius > maxRadiusMm * 0.6 {
                 let toCenter = -planarPosition / max(radius, 0.001)
@@ -637,6 +788,17 @@ struct FlyWorldBrainDrivenMotionController {
                 let turnRate: Float = 2.2 * edgeWeight
                 let headingDelta = wrapAngle(targetHeading - heading)
                 heading = wrapAngle(heading + headingDelta * turnRate * Float(dt))
+            }
+
+            let unclampedPlanarPosition = planarPosition
+            planarPosition = FlyWorldObstacleAvoidance.clampedPlanarPosition(
+                planarPosition,
+                insideArenaRadius: maxRadiusMm,
+                objects: packet.worldObjectsOrDefault
+            )
+            let correction = planarPosition - unclampedPlanarPosition
+            if simd_length_squared(correction) > 0.0001 {
+                heading = atan2(correction.y, correction.x)
             }
 
             footholdAnchorsMm.removeAll(keepingCapacity: true)
@@ -769,11 +931,12 @@ struct FlyWorldBrainDrivenMotionController {
 
     private func clampedPlanarPosition(
         _ planarPosition: SIMD2<Float>,
+        insideArenaRadius arenaRadiusMm: Float = FlyWorldLegKinematics.arenaRadiusMm,
         objects: [FlyWorldPosePacket.WorldObject]
     ) -> SIMD2<Float> {
         FlyWorldObstacleAvoidance.clampedPlanarPosition(
             planarPosition,
-            insideArenaRadius: FlyWorldLegKinematics.arenaRadiusMm,
+            insideArenaRadius: arenaRadiusMm,
             objects: objects
         )
     }
@@ -803,7 +966,8 @@ struct FlyWorldArenaEdgeSignals: Equatable {
 
     static func sensing(
         currentPositionMm: SIMD3<Float>,
-        currentHeading: Float
+        currentHeading: Float,
+        arenaRadiusMm: Float = FlyWorldLegKinematics.arenaRadiusMm
     ) -> FlyWorldArenaEdgeSignals {
         let planarPosition = SIMD2<Float>(currentPositionMm.x, currentPositionMm.y)
         let distance = simd_length(planarPosition)
@@ -813,8 +977,8 @@ struct FlyWorldArenaEdgeSignals: Equatable {
         let previewDistanceMm: Float = 1.15
         let previewDistance = simd_length(planarPosition + forwardVector * previewDistanceMm)
         let edgeDrive = clamp(
-            (previewDistance - FlyWorldLegKinematics.arenaRadiusMm * 0.76) /
-                (FlyWorldLegKinematics.arenaRadiusMm * 0.18),
+            (previewDistance - arenaRadiusMm * 0.76) /
+                (arenaRadiusMm * 0.18),
             min: 0.0,
             max: 1.0
         )
@@ -1082,7 +1246,8 @@ private enum FlyWorldLowLevelController {
     ) -> FlyWorldLowLevelCommand {
         let edgeSignals = FlyWorldArenaEdgeSignals.sensing(
             currentPositionMm: currentPositionMm,
-            currentHeading: currentHeading
+            currentHeading: currentHeading,
+            arenaRadiusMm: behavior == "fly" ? FlyWorldFlightTuning.arenaRadiusMm : FlyWorldLegKinematics.arenaRadiusMm
         )
         let obstacleSignals = FlyWorldObstacleSignals.sensing(
             currentPositionMm: currentPositionMm,

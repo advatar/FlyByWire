@@ -43,7 +43,8 @@
         "MN9": 0.0,
         "loom_escape": 0.0
       },
-      "behavior": "walk"
+      "behavior": "walk",
+      "genome_summary": "parent seed genome"
     },
     {
       "id": "generation-8",
@@ -68,7 +69,17 @@
         "MN9": 0.0,
         "loom_escape": 0.0
       },
-      "behavior": "walk"
+      "behavior": "walk",
+      "genome_summary": "offspring candidate genome"
+    }
+  ],
+  "mating_events": [
+    {
+      "id": "generation-8-cross",
+      "parent_ids": ["generation-0", "generation-8"],
+      "offspring_id": "generation-9",
+      "generation": 9,
+      "timestamp": 0.0
     }
   ],
   "world_objects": [

@@ -12,6 +12,7 @@ struct FlyWorldPosePacket: Decodable {
         let jointAnglesRad: [String: Float]
         let brainState: [String: Float]
         let behavior: String
+        let genomeSummary: String?
 
         var rootPositionVector: SIMD3<Float> {
             FlyWorldPosePacket.vector3(from: rootPositionMm, fallback: .zero)
@@ -41,6 +42,14 @@ struct FlyWorldPosePacket: Decodable {
         }
     }
 
+    struct MatingEvent: Decodable {
+        let id: String?
+        let parentIds: [String]?
+        let offspringId: String?
+        let generation: Int?
+        let timestamp: Double?
+    }
+
     let timestamp: Double
     let rootPositionMm: [Float]
     let rootQuaternionXyzw: [Float]
@@ -50,6 +59,7 @@ struct FlyWorldPosePacket: Decodable {
     let worldObjects: [WorldObject]?
     let agents: [Agent]?
     let channelAliases: [String: String]?
+    let matingEvents: [MatingEvent]?
 
     init(
         timestamp: Double,
@@ -60,7 +70,8 @@ struct FlyWorldPosePacket: Decodable {
         behavior: String,
         worldObjects: [WorldObject]?,
         agents: [Agent]? = nil,
-        channelAliases: [String: String]? = nil
+        channelAliases: [String: String]? = nil,
+        matingEvents: [MatingEvent]? = nil
     ) {
         self.timestamp = timestamp
         self.rootPositionMm = rootPositionMm
@@ -71,6 +82,7 @@ struct FlyWorldPosePacket: Decodable {
         self.worldObjects = worldObjects
         self.agents = agents
         self.channelAliases = channelAliases
+        self.matingEvents = matingEvents
     }
 
     var rootPositionVector: SIMD3<Float> {
@@ -102,7 +114,8 @@ struct FlyWorldPosePacket: Decodable {
             behavior: agent.behavior,
             worldObjects: worldObjects,
             agents: nil,
-            channelAliases: channelAliases
+            channelAliases: channelAliases,
+            matingEvents: matingEvents
         )
     }
 
@@ -116,7 +129,8 @@ struct FlyWorldPosePacket: Decodable {
             rootQuaternionXyzw: rootQuaternionXyzw,
             jointAnglesRad: jointAnglesRad,
             brainState: brainState,
-            behavior: behavior
+            behavior: behavior,
+            genomeSummary: nil
         )
     }
 

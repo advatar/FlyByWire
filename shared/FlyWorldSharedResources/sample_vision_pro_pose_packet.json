@@ -210,6 +210,46 @@
       "behavior": "fly",
       "genome_summary": "freq_mean=11.996, amp_mean=0.934, conv_mean=15.143, stumble=-1.477, amp_range=(-0.540, 1.964)",
       "score": 3.1427
+    },
+    {
+      "id": "demo_offspring_gen_1",
+      "label": "Offspring Gen 1 (24.10)",
+      "generation": 1,
+      "root_position_mm": [
+        0.0,
+        -10.0,
+        14.88
+      ],
+      "root_quaternion_xyzw": [
+        0.0,
+        0.0,
+        -0.049979,
+        0.99875
+      ],
+      "joint_angles_rad": {},
+      "brain_state": {
+        "oDN1": 0.742365,
+        "DNa01": 0.048471,
+        "DNa02": 0.0,
+        "aDN1": 0.0,
+        "MN9": 0.0,
+        "loom_escape": 0.0
+      },
+      "behavior": "fly",
+      "genome_summary": "offspring of locomotion_flygym x locomotion_toy, mutation_sigma=0.08",
+      "score": 24.103
+    }
+  ],
+  "mating_events": [
+    {
+      "id": "demo_top_cross_generation_1",
+      "parent_ids": [
+        "locomotion_flygym",
+        "locomotion_toy"
+      ],
+      "offspring_id": "demo_offspring_gen_1",
+      "generation": 1,
+      "timestamp": 1779419958.4175282
     }
   ],
   "world_objects": [

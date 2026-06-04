@@ -67,9 +67,11 @@ final class FlyWorldSceneController {
 
     private let arenaRoot = Entity()
     private let worldObjectsRoot = Entity()
+    private let evolutionRoot = Entity()
     private var graph: FlyWorldGraph?
     private var rig: FlyWorldBuild?
     private var extraRigs: [String: FlyWorldBuild] = [:]
+    private var evolutionVisual: FlyWorldEvolutionVisual?
     private var poseTask: Task<Void, Never>?
     private var latestPacket: FlyWorldPosePacket?
     private var latestPoseSource: FlyWorldPosePacketSource?
@@ -89,6 +91,7 @@ final class FlyWorldSceneController {
     init() {
         root.addChild(arenaRoot)
         root.addChild(worldObjectsRoot)
+        root.addChild(evolutionRoot)
         buildArena()
     }
 
@@ -211,7 +214,11 @@ final class FlyWorldSceneController {
         case .directPose:
             return FlyWorldMotionFrame.directPose(packet: packet, time: time)
         case .brainDrivenFallback:
-            var controller = brainMotionControllers[agentID] ?? FlyWorldBrainDrivenMotionController()
+            var controller = brainMotionControllers[agentID] ?? {
+                var controller = FlyWorldBrainDrivenMotionController()
+                controller.phaseSeed = phaseSeed(for: agentID)
+                return controller
+            }()
             let motion = controller.synthesize(packet: packet, time: time, neighborsMm: neighborsMm)
             brainMotionControllers[agentID] = controller
             return motion
@@ -231,6 +238,8 @@ final class FlyWorldSceneController {
         syncExtraRigs(for: packet.displayAgents)
 
         var primaryBehavior = packet.behavior
+        var renderedAgents: [FlyWorldRenderedAgentState] = []
+        renderedAgents.reserveCapacity(packet.displayAgents.count)
         for (index, agent) in packet.displayAgents.enumerated() {
             let agentPacket = packet.packet(for: agent)
             let neighbors = neighborPositions(excluding: agent.id)
@@ -243,10 +252,28 @@ final class FlyWorldSceneController {
             guard let build = rig(for: agent, index: index) else { continue }
             applyRootTransform(motion: motion, rig: build)
             applyBehaviorState(packet: agentPacket, motion: motion, rig: build)
+            renderedAgents.append(
+                FlyWorldRenderedAgentState(
+                    id: agent.id,
+                    label: agent.label,
+                    generation: agent.generation,
+                    score: agent.score,
+                    genomeSummary: agent.genomeSummary,
+                    positionMm: motion.rootPositionMm,
+                    scenePosition: scenePosition(from: motion.rootPositionMm),
+                    behavior: motion.behavior
+                )
+            )
             if index == 0 {
                 primaryBehavior = motion.behavior
             }
         }
+
+        updateEvolutionVisualization(
+            packet: packet,
+            renderedAgents: renderedAgents,
+            time: time
+        )
 
         return primaryBehavior
     }
@@ -300,11 +327,7 @@ final class FlyWorldSceneController {
 
     private func applyRootTransform(motion: FlyWorldMotionFrame, rig: FlyWorldBuild) {
         let simulationPosition = motion.rootPositionMm
-        rig.poseAnchor.position = SIMD3<Float>(
-            simulationPosition.x * millimeterScale,
-            simulationPosition.z * millimeterScale,
-            -simulationPosition.y * millimeterScale
-        )
+        rig.poseAnchor.position = scenePosition(from: simulationPosition)
 
         let packetOrientation = motion.rootQuaternion
         var orientation =
@@ -320,6 +343,14 @@ final class FlyWorldSceneController {
         }
 
         rig.poseAnchor.orientation = orientation
+    }
+
+    private func scenePosition(from simulationPosition: SIMD3<Float>) -> SIMD3<Float> {
+        SIMD3<Float>(
+            simulationPosition.x * millimeterScale,
+            simulationPosition.z * millimeterScale,
+            -simulationPosition.y * millimeterScale
+        )
     }
 
     private func applyBehaviorState(
@@ -454,6 +485,236 @@ final class FlyWorldSceneController {
 
         rig.brainHalo.model?.materials = [UnlitMaterial(color: color)]
         rig.brainHalo.components.set(OpacityComponent(opacity: 0.08 + clamped * 0.10))
+    }
+
+    private func updateEvolutionVisualization(
+        packet: FlyWorldPosePacket,
+        renderedAgents: [FlyWorldRenderedAgentState],
+        time: TimeInterval
+    ) {
+        guard let pair = selectedMatingPair(packet: packet, renderedAgents: renderedAgents) else {
+            evolutionVisual?.root.isEnabled = false
+            return
+        }
+
+        let visual = ensureEvolutionVisual()
+        visual.root.isEnabled = true
+
+        let phase = FlyWorldGeneticVisualization.phase(for: time)
+        let pulse = 0.5 + sin(phase * Float.pi * 2.0) * 0.5
+        let parentOffset = SIMD3<Float>(0.0, 0.12 + pulse * 0.012, 0.0)
+        let parentAPosition = pair.parentA.scenePosition + parentOffset
+        let parentBPosition = pair.parentB.scenePosition + parentOffset
+        let midpoint = (parentAPosition + parentBPosition) * 0.5
+
+        let offspringProgress = FlyWorldGeneticVisualization.offspringProgress(forPhase: phase)
+        let offspringTarget: SIMD3<Float>
+        if let offspring = pair.offspring {
+            offspringTarget = offspring.scenePosition + SIMD3<Float>(0.0, 0.16, 0.0)
+        } else {
+            offspringTarget = midpoint + SIMD3<Float>(0.0, 0.10, 0.0)
+        }
+        let offspringPosition =
+            midpoint +
+            (offspringTarget - midpoint) * offspringProgress +
+            SIMD3<Float>(0.0, sin(phase * Float.pi * 2.0) * 0.018, 0.0)
+
+        visual.parentA.position = parentAPosition
+        visual.parentB.position = parentBPosition
+        visual.offspring.position = offspringPosition
+        visual.generationBeacon.position = offspringPosition + SIMD3<Float>(0.0, 0.036, 0.0)
+
+        let generationScale = 1.0 + Float(min(pair.offspringGeneration ?? 0, 12)) * 0.045
+        visual.parentA.scale = SIMD3<Float>(repeating: 0.032 + pulse * 0.006)
+        visual.parentB.scale = SIMD3<Float>(repeating: 0.032 + (1.0 - pulse) * 0.006)
+        visual.offspring.scale = SIMD3<Float>(repeating: (0.018 + offspringProgress * 0.030) * generationScale)
+        visual.generationBeacon.scale = SIMD3<Float>(
+            0.010 + offspringProgress * 0.010,
+            0.052 + offspringProgress * 0.028,
+            0.010 + offspringProgress * 0.010
+        )
+
+        let beamOpacity = 0.24 + offspringProgress * 0.34
+        updateEvolutionBeam(
+            visual.lineageA,
+            from: parentAPosition,
+            to: offspringPosition,
+            radius: 0.004 + pulse * 0.0015,
+            opacity: beamOpacity
+        )
+        updateEvolutionBeam(
+            visual.lineageB,
+            from: parentBPosition,
+            to: offspringPosition,
+            radius: 0.004 + (1.0 - pulse) * 0.0015,
+            opacity: beamOpacity
+        )
+
+        setEvolutionMaterial(
+            visual.parentA,
+            color: FlyWorldEntityFactory.color(0.22, 0.88, 1.0),
+            opacity: 0.50 + pulse * 0.18
+        )
+        setEvolutionMaterial(
+            visual.parentB,
+            color: FlyWorldEntityFactory.color(1.0, 0.46, 0.86),
+            opacity: 0.50 + (1.0 - pulse) * 0.18
+        )
+        setEvolutionMaterial(
+            visual.offspring,
+            color: FlyWorldEntityFactory.color(0.74, 1.0, 0.30),
+            opacity: 0.58 + offspringProgress * 0.30
+        )
+        setEvolutionMaterial(
+            visual.generationBeacon,
+            color: FlyWorldEntityFactory.color(1.0, 0.94, 0.28),
+            opacity: 0.40 + offspringProgress * 0.36
+        )
+    }
+
+    private func selectedMatingPair(
+        packet: FlyWorldPosePacket,
+        renderedAgents: [FlyWorldRenderedAgentState]
+    ) -> FlyWorldMatingPair? {
+        guard renderedAgents.count >= 2 else { return nil }
+        let statesByID = Dictionary(uniqueKeysWithValues: renderedAgents.map { ($0.id, $0) })
+
+        if let event = packet.matingEvents?.reversed().first,
+           let parentIDs = event.parentIds,
+           parentIDs.count >= 2,
+           let parentA = statesByID[parentIDs[0]],
+           let parentB = statesByID[parentIDs[1]] {
+            let offspring = event.offspringId.flatMap { statesByID[$0] }
+            return FlyWorldMatingPair(
+                id: event.id ?? "\(parentA.id)-\(parentB.id)-\(event.offspringId ?? "offspring")",
+                parentA: parentA,
+                parentB: parentB,
+                offspring: offspring,
+                offspringID: event.offspringId,
+                offspringGeneration: event.generation ?? inferredOffspringGeneration(parentA: parentA, parentB: parentB)
+            )
+        }
+
+        return inferredMatingPair(from: renderedAgents)
+    }
+
+    private func inferredMatingPair(
+        from renderedAgents: [FlyWorldRenderedAgentState]
+    ) -> FlyWorldMatingPair? {
+        let ranked = renderedAgents.sorted { lhs, rhs in
+            let lhsScore = lhs.score ?? -Float.greatestFiniteMagnitude
+            let rhsScore = rhs.score ?? -Float.greatestFiniteMagnitude
+            if lhsScore != rhsScore {
+                return lhsScore > rhsScore
+            }
+            return (lhs.generation ?? 0) > (rhs.generation ?? 0)
+        }
+        guard ranked.count >= 2 else { return nil }
+
+        let parentA = ranked[0]
+        let parentB = ranked[1]
+        let generation = inferredOffspringGeneration(parentA: parentA, parentB: parentB)
+        return FlyWorldMatingPair(
+            id: "inferred-\(parentA.id)-\(parentB.id)-gen-\(generation)",
+            parentA: parentA,
+            parentB: parentB,
+            offspring: nil,
+            offspringID: "offspring-gen-\(generation)",
+            offspringGeneration: generation
+        )
+    }
+
+    private func inferredOffspringGeneration(
+        parentA: FlyWorldRenderedAgentState,
+        parentB: FlyWorldRenderedAgentState
+    ) -> Int {
+        max(parentA.generation ?? 0, parentB.generation ?? 0) + 1
+    }
+
+    private func ensureEvolutionVisual() -> FlyWorldEvolutionVisual {
+        if let evolutionVisual {
+            return evolutionVisual
+        }
+
+        let visual = makeEvolutionVisual()
+        evolutionRoot.addChild(visual.root)
+        evolutionVisual = visual
+        return visual
+    }
+
+    private func makeEvolutionVisual() -> FlyWorldEvolutionVisual {
+        let root = Entity()
+        root.name = "GeneticEvolutionOverlay"
+
+        let parentA = ModelEntity(
+            mesh: .generateSphere(radius: 1.0),
+            materials: [UnlitMaterial(color: FlyWorldEntityFactory.color(0.22, 0.88, 1.0))]
+        )
+        parentA.name = "MatingParentA"
+
+        let parentB = ModelEntity(
+            mesh: .generateSphere(radius: 1.0),
+            materials: [UnlitMaterial(color: FlyWorldEntityFactory.color(1.0, 0.46, 0.86))]
+        )
+        parentB.name = "MatingParentB"
+
+        let offspring = ModelEntity(
+            mesh: .generateSphere(radius: 1.0),
+            materials: [UnlitMaterial(color: FlyWorldEntityFactory.color(0.74, 1.0, 0.30))]
+        )
+        offspring.name = "OffspringMarker"
+
+        let generationBeacon = ModelEntity(
+            mesh: .generateCylinder(height: 1.0, radius: 1.0),
+            materials: [UnlitMaterial(color: FlyWorldEntityFactory.color(1.0, 0.94, 0.28))]
+        )
+        generationBeacon.name = "OffspringGenerationBeacon"
+
+        let lineageA = ModelEntity(
+            mesh: .generateCylinder(height: 1.0, radius: 1.0),
+            materials: [UnlitMaterial(color: FlyWorldEntityFactory.color(0.22, 0.88, 1.0))]
+        )
+        lineageA.name = "LineageBeamA"
+
+        let lineageB = ModelEntity(
+            mesh: .generateCylinder(height: 1.0, radius: 1.0),
+            materials: [UnlitMaterial(color: FlyWorldEntityFactory.color(1.0, 0.46, 0.86))]
+        )
+        lineageB.name = "LineageBeamB"
+
+        for entity in [lineageA, lineageB, parentA, parentB, offspring, generationBeacon] {
+            root.addChild(entity)
+        }
+
+        return FlyWorldEvolutionVisual(
+            root: root,
+            parentA: parentA,
+            parentB: parentB,
+            offspring: offspring,
+            generationBeacon: generationBeacon,
+            lineageA: lineageA,
+            lineageB: lineageB
+        )
+    }
+
+    private func updateEvolutionBeam(
+        _ beam: ModelEntity,
+        from start: SIMD3<Float>,
+        to end: SIMD3<Float>,
+        radius: Float,
+        opacity: Float
+    ) {
+        FlyWorldEntityFactory.retargetBone(beam, from: start, to: end, radius: radius)
+        beam.components.set(OpacityComponent(opacity: opacity))
+    }
+
+    private func setEvolutionMaterial(
+        _ entity: ModelEntity,
+        color: PlatformColor,
+        opacity: Float
+    ) {
+        entity.model?.materials = [UnlitMaterial(color: color)]
+        entity.components.set(OpacityComponent(opacity: opacity))
     }
 
     private func updateWorldObjects(from objects: [FlyWorldPosePacket.WorldObject]) {
@@ -709,6 +970,50 @@ final class FlyWorldSceneController {
             opacity: 0.76
         )
     ]
+}
+
+private struct FlyWorldRenderedAgentState {
+    let id: String
+    let label: String?
+    let generation: Int?
+    let score: Float?
+    let genomeSummary: String?
+    let positionMm: SIMD3<Float>
+    let scenePosition: SIMD3<Float>
+    let behavior: String
+}
+
+private struct FlyWorldMatingPair {
+    let id: String
+    let parentA: FlyWorldRenderedAgentState
+    let parentB: FlyWorldRenderedAgentState
+    let offspring: FlyWorldRenderedAgentState?
+    let offspringID: String?
+    let offspringGeneration: Int?
+}
+
+private struct FlyWorldEvolutionVisual {
+    let root: Entity
+    let parentA: ModelEntity
+    let parentB: ModelEntity
+    let offspring: ModelEntity
+    let generationBeacon: ModelEntity
+    let lineageA: ModelEntity
+    let lineageB: ModelEntity
+}
+
+private enum FlyWorldGeneticVisualization {
+    static func phase(for time: TimeInterval) -> Float {
+        let cycleDuration: TimeInterval = 8.0
+        let remainder = time.truncatingRemainder(dividingBy: cycleDuration)
+        return Float(remainder / cycleDuration)
+    }
+
+    static func offspringProgress(forPhase phase: Float) -> Float {
+        let rawProgress = (phase - Float(0.18)) / Float(0.64)
+        let normalized = Swift.min(Swift.max(rawProgress, Float(0.0)), Float(1.0))
+        return normalized * normalized * (Float(3.0) - Float(2.0) * normalized)
+    }
 }
 
 private struct FlyWorldBuild {
