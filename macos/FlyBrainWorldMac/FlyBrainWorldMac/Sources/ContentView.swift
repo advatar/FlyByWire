@@ -36,11 +36,23 @@ struct ContentView: View {
             MacControlPanel(
                 metadata: sceneController.metadata,
                 errorMessage: sceneController.errorMessage,
+                poseServerStatus: sceneController.poseServerStatus,
+                startPoseServer: {
+                    sceneController.startLocalPoseServerIfNeeded()
+                },
                 camera: $camera
             )
             .frame(width: 340)
         }
         .frame(minWidth: 1280, minHeight: 860)
+        .task {
+            sceneController.loadIfNeeded()
+            sceneController.startPoseUpdates()
+        }
+        .onDisappear {
+            sceneController.stopPoseUpdates()
+            sceneController.stopLocalPoseServer()
+        }
     }
 
     private func updateScenePlacement() {
@@ -55,6 +67,8 @@ struct ContentView: View {
 private struct MacControlPanel: View {
     let metadata: FlyWorldSceneMetadata?
     let errorMessage: String?
+    let poseServerStatus: String?
+    let startPoseServer: () -> Void
     @Binding var camera: MacFlyWorldCameraState
 
     var body: some View {
@@ -71,6 +85,17 @@ private struct MacControlPanel: View {
                     camera.reset()
                 }
                 .buttonStyle(.bordered)
+
+                Button("Start Live Server") {
+                    startPoseServer()
+                }
+                .buttonStyle(.borderedProminent)
+
+                if let poseServerStatus {
+                    Text(poseServerStatus)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
 
                 VStack(alignment: .leading, spacing: 12) {
                     MacSlider(title: "Scene Scale", value: $camera.sceneScale, range: MacFlyWorldCameraState.sceneScaleRange, format: "%.2fx")

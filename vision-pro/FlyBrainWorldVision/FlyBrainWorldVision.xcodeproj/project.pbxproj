@@ -245,9 +245,9 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = xros;
-				SUPPORTED_PLATFORMS = "macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
 				SUPPORTS_MACCATALYST = NO;
-				TARGETED_DEVICE_FAMILY = 7;
+				TARGETED_DEVICE_FAMILY = "1,7";
 				XROS_DEPLOYMENT_TARGET = 2.0;
 			};
 			name = Debug;
@@ -331,9 +331,9 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = xros;
-				SUPPORTED_PLATFORMS = "macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
 				SUPPORTS_MACCATALYST = NO;
-				TARGETED_DEVICE_FAMILY = 7;
+				TARGETED_DEVICE_FAMILY = "1,7";
 				XROS_DEPLOYMENT_TARGET = 2.0;
 			};
 			name = Release;

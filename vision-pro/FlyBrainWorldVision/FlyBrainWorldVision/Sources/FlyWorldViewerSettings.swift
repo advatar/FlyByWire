@@ -5,7 +5,12 @@ import Observation
 @Observable
 final class FlyWorldViewerSettings {
     private static let packetURLDefaultsKey = "FlyWorldViewerSettings.packetURL"
+    private static let packetURLUserEditedDefaultsKey = "FlyWorldViewerSettings.packetURL.userEdited"
     private static let stalePoseURLSuffix = ":8765/pose"
+    private static let retiredDefaultPacketURLs = [
+        "http://127.0.0.1:8765/pose",
+        "http://192.168.2.209:8765/pose"
+    ]
 
     var sceneScale: Float = 0.16
     var verticalOffset: Float = -0.28
@@ -14,6 +19,7 @@ final class FlyWorldViewerSettings {
     var packetURL: String {
         didSet {
             UserDefaults.standard.set(packetURL, forKey: Self.packetURLDefaultsKey)
+            UserDefaults.standard.set(true, forKey: Self.packetURLUserEditedDefaultsKey)
         }
     }
 
@@ -39,7 +45,11 @@ final class FlyWorldViewerSettings {
         guard !trimmed.isEmpty else {
             return fallback
         }
-        if trimmed.contains(stalePoseURLSuffix), trimmed != fallback {
+        let wasUserEdited = UserDefaults.standard.bool(forKey: packetURLUserEditedDefaultsKey)
+        if !wasUserEdited, retiredDefaultPacketURLs.contains(trimmed) {
+            return fallback
+        }
+        if !wasUserEdited, !fallback.isEmpty, trimmed.contains(stalePoseURLSuffix), trimmed != fallback {
             return fallback
         }
         return trimmed

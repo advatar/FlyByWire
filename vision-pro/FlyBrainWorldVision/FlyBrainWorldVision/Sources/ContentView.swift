@@ -146,7 +146,7 @@ struct FlyWorldControlWindow: View {
                     Text("LAN Pose Stream")
                         .font(.headline)
 
-                    Text("Using \(FlyWorldSceneController.defaultPacketURLString). Paste another URL only if the Mac's LAN IP changes.")
+                    Text(packetURLHelpText)
                         .foregroundStyle(.secondary)
                         .font(.footnote)
 
@@ -212,7 +212,7 @@ struct FlyWorldControlWindow: View {
 
     private var packetURLTextField: some View {
 #if os(visionOS)
-        TextField(FlyWorldSceneController.defaultPacketURLString, text: $viewerSettings.packetURL)
+        TextField(packetURLPlaceholder, text: $viewerSettings.packetURL)
             .textFieldStyle(.roundedBorder)
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
@@ -220,13 +220,26 @@ struct FlyWorldControlWindow: View {
                 sceneController.packetURLString = newValue
             }
 #else
-        TextField(FlyWorldSceneController.defaultPacketURLString, text: $viewerSettings.packetURL)
+        TextField(packetURLPlaceholder, text: $viewerSettings.packetURL)
             .textFieldStyle(.roundedBorder)
             .autocorrectionDisabled()
             .onChange(of: viewerSettings.packetURL) { _, newValue in
                 sceneController.packetURLString = newValue
             }
 #endif
+    }
+
+    private var packetURLHelpText: String {
+        if FlyWorldSceneController.defaultPacketURLString.isEmpty {
+            return "Start the pose server on the Mac and paste the printed LAN URL. A Vision Pro app cannot launch the Mac Python simulation process directly."
+        }
+        return "Using \(FlyWorldSceneController.defaultPacketURLString). Paste another URL only if the Mac's LAN IP changes."
+    }
+
+    private var packetURLPlaceholder: String {
+        FlyWorldSceneController.defaultPacketURLString.isEmpty
+            ? "http://<mac-lan-ip>:8765/pose"
+            : FlyWorldSceneController.defaultPacketURLString
     }
 }
 

@@ -19,6 +19,7 @@
     "loom_escape": 0.0
   },
   "behavior": "walk",
+  "life_state": "alive",
   "agents": [
     {
       "id": "generation-0",
@@ -44,6 +45,7 @@
         "loom_escape": 0.0
       },
       "behavior": "walk",
+      "life_state": "alive",
       "genome_summary": "parent seed genome"
     },
     {
@@ -69,7 +71,10 @@
         "MN9": 0.0,
         "loom_escape": 0.0
       },
-      "behavior": "walk",
+      "behavior": "dead",
+      "life_state": "dead",
+      "death_reason": "terminated",
+      "death_time": 12.5,
       "genome_summary": "offspring candidate genome"
     }
   ],

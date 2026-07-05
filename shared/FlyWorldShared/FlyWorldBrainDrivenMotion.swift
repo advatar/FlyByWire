@@ -61,6 +61,9 @@ enum FlyWorldBehaviorResolver {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
 
+        if ["dead", "killed", "terminated"].contains(normalized) {
+            return "dead"
+        }
         if normalized == "fly" {
             return "fly"
         }
@@ -457,7 +460,7 @@ enum FlyWorldLegKinematics {
         strideDrive: Float
     ) -> Float {
         switch behavior {
-        case "fly":
+        case "fly", "dead":
             return 0.0
         case "idle", "groom":
             return 1.0
@@ -1263,6 +1266,10 @@ private enum FlyWorldLowLevelController {
         var turnIntent = descending.leftTurnDrive - descending.rightTurnDrive
 
         switch behavior {
+        case "dead":
+            locomotionDrive = 0.0
+            turnIntent = 0.0
+
         case "feed":
             if let target = nearestWorldObject(
                 matching: ["drink", "food"],
@@ -1318,7 +1325,7 @@ private enum FlyWorldLowLevelController {
             break
         }
 
-        if behavior != "idle" && behavior != "groom" {
+        if behavior != "idle" && behavior != "groom" && behavior != "dead" {
             turnIntent += edgeSignals.turnIntent
             locomotionDrive *= edgeSignals.forwardScale
             turnIntent += obstacleSignals.turnIntent
@@ -1330,7 +1337,9 @@ private enum FlyWorldLowLevelController {
         let strideAverage = (leftStrideDrive + rightStrideDrive) * 0.5
 
         let turnVelocity: Float
-        if behavior == "escape" {
+        if behavior == "dead" {
+            turnVelocity = 0.0
+        } else if behavior == "escape" {
             turnVelocity = turnIntent * 1.8
         } else {
             turnVelocity = turnIntent * 1.2
@@ -1338,7 +1347,7 @@ private enum FlyWorldLowLevelController {
 
         let forwardVelocity: Float
         switch behavior {
-        case "idle", "groom":
+        case "dead", "idle", "groom":
             forwardVelocity = 0.0
         case "feed":
             forwardVelocity = 0.08 + strideAverage * 0.95
@@ -1350,7 +1359,7 @@ private enum FlyWorldLowLevelController {
 
         let gaitAngularSpeed: Float
         switch behavior {
-        case "idle":
+        case "dead", "idle":
             gaitAngularSpeed = 0.0
         case "groom":
             gaitAngularSpeed = 1.4

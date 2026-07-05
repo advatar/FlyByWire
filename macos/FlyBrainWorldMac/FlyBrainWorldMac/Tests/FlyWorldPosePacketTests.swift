@@ -3,8 +3,8 @@ import XCTest
 
 final class FlyWorldPosePacketTests: XCTestCase {
     @MainActor
-    func testDefaultPoseStreamUsesCurrentLearningToFlyHost() throws {
-        XCTAssertEqual(FlyWorldSceneController.defaultPacketURLString, "http://192.168.2.209:8765/pose")
+    func testDefaultPoseStreamUsesLocalhostForAutoStartedServer() throws {
+        XCTAssertEqual(FlyWorldSceneController.defaultPacketURLString, "http://127.0.0.1:8765/pose")
         let controller = FlyWorldSceneController()
         XCTAssertEqual(controller.packetURLString, FlyWorldSceneController.defaultPacketURLString)
     }
@@ -85,7 +85,10 @@ final class FlyWorldPosePacketTests: XCTestCase {
               "brain_state": {
                 "oDN1": 0.6
               },
-              "behavior": "walk"
+              "behavior": "dead",
+              "life_state": "dead",
+              "death_reason": "terminated",
+              "death_time": 1234.5
             }
           ]
         }
@@ -96,10 +99,14 @@ final class FlyWorldPosePacketTests: XCTestCase {
         XCTAssertEqual(packet.displayAgents.count, 2)
         XCTAssertEqual(packet.displayAgents.map(\.id), ["generation-0", "generation-4"])
         XCTAssertEqual(packet.displayAgents[1].generation, 4)
+        XCTAssertTrue(packet.displayAgents[1].isDead)
+        XCTAssertEqual(packet.displayAgents[1].deathReason, "terminated")
 
         let agentPacket = packet.packet(for: packet.displayAgents[1])
         XCTAssertEqual(agentPacket.rootPositionMm, [-8.0, 6.0, 0.3])
-        XCTAssertEqual(agentPacket.behavior, "walk")
+        XCTAssertEqual(agentPacket.behavior, "dead")
+        XCTAssertTrue(agentPacket.isDead)
+        XCTAssertEqual(agentPacket.deathTime, 1234.5)
         XCTAssertNil(agentPacket.agents)
     }
 }

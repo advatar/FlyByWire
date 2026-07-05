@@ -13,6 +13,9 @@ struct FlyWorldPosePacket: Decodable {
         let brainState: [String: Float]
         let behavior: String
         let genomeSummary: String?
+        let lifeState: String?
+        let deathReason: String?
+        let deathTime: Double?
 
         var rootPositionVector: SIMD3<Float> {
             FlyWorldPosePacket.vector3(from: rootPositionMm, fallback: .zero)
@@ -20,6 +23,10 @@ struct FlyWorldPosePacket: Decodable {
 
         var rootQuaternion: simd_quatf {
             FlyWorldPosePacket.quaternion(from: rootQuaternionXyzw)
+        }
+
+        var isDead: Bool {
+            FlyWorldPosePacket.isDead(lifeState: lifeState, behavior: behavior)
         }
     }
 
@@ -56,6 +63,9 @@ struct FlyWorldPosePacket: Decodable {
     let jointAnglesRad: [String: Float]
     let brainState: [String: Float]
     let behavior: String
+    let lifeState: String?
+    let deathReason: String?
+    let deathTime: Double?
     let worldObjects: [WorldObject]?
     let agents: [Agent]?
     let channelAliases: [String: String]?
@@ -68,6 +78,9 @@ struct FlyWorldPosePacket: Decodable {
         jointAnglesRad: [String: Float],
         brainState: [String: Float],
         behavior: String,
+        lifeState: String? = nil,
+        deathReason: String? = nil,
+        deathTime: Double? = nil,
         worldObjects: [WorldObject]?,
         agents: [Agent]? = nil,
         channelAliases: [String: String]? = nil,
@@ -79,6 +92,9 @@ struct FlyWorldPosePacket: Decodable {
         self.jointAnglesRad = jointAnglesRad
         self.brainState = brainState
         self.behavior = behavior
+        self.lifeState = lifeState
+        self.deathReason = deathReason
+        self.deathTime = deathTime
         self.worldObjects = worldObjects
         self.agents = agents
         self.channelAliases = channelAliases
@@ -97,6 +113,10 @@ struct FlyWorldPosePacket: Decodable {
         worldObjects ?? []
     }
 
+    var isDead: Bool {
+        Self.isDead(lifeState: lifeState, behavior: behavior)
+    }
+
     var displayAgents: [Agent] {
         if let agents, !agents.isEmpty {
             return agents
@@ -112,6 +132,9 @@ struct FlyWorldPosePacket: Decodable {
             jointAnglesRad: agent.jointAnglesRad,
             brainState: agent.brainState,
             behavior: agent.behavior,
+            lifeState: agent.lifeState,
+            deathReason: agent.deathReason,
+            deathTime: agent.deathTime,
             worldObjects: worldObjects,
             agents: nil,
             channelAliases: channelAliases,
@@ -130,8 +153,28 @@ struct FlyWorldPosePacket: Decodable {
             jointAnglesRad: jointAnglesRad,
             brainState: brainState,
             behavior: behavior,
-            genomeSummary: nil
+            genomeSummary: nil,
+            lifeState: lifeState,
+            deathReason: deathReason,
+            deathTime: deathTime
         )
+    }
+
+    fileprivate static func isDead(lifeState: String?, behavior: String) -> Bool {
+        let normalizedState = normalizedLifecycleToken(lifeState)
+        if ["dead", "killed", "terminated"].contains(normalizedState) {
+            return true
+        }
+
+        let normalizedBehavior = normalizedLifecycleToken(behavior)
+        return ["dead", "killed", "terminated"].contains(normalizedBehavior)
+    }
+
+    private static func normalizedLifecycleToken(_ token: String?) -> String {
+        (token ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "-", with: "_")
+            .lowercased()
     }
 
     fileprivate static func vector3(from values: [Float], fallback: SIMD3<Float>) -> SIMD3<Float> {

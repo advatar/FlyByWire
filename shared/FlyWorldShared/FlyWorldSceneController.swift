@@ -61,7 +61,11 @@ private enum FlyWorldMotionMode {
 @MainActor
 @Observable
 final class FlyWorldSceneController {
-    static let defaultPacketURLString = "http://192.168.2.209:8765/pose"
+    #if os(macOS)
+    static let defaultPacketURLString = "http://127.0.0.1:8765/pose"
+    #else
+    static let defaultPacketURLString = ""
+    #endif
 
     let root = Entity()
 
@@ -79,6 +83,11 @@ final class FlyWorldSceneController {
     private var isLoaded = false
     private var motionMode: FlyWorldMotionMode = .brainDrivenFallback
     private var brainMotionControllers: [String: FlyWorldBrainDrivenMotionController] = [:]
+    private var deathAnimations: [String: FlyWorldDeathAnimation] = [:]
+    #if os(macOS)
+    private var localPoseServerProcess: Process?
+    private var localPoseServerPipe: Pipe?
+    #endif
 
     private let floorY: Float = FlyWorldLegKinematics.arenaFloorSceneY
     private let millimeterScale: Float = FlyWorldLegKinematics.sceneMillimeterScale
@@ -86,6 +95,7 @@ final class FlyWorldSceneController {
 
     private(set) var metadata: FlyWorldSceneMetadata?
     private(set) var errorMessage: String?
+    private(set) var poseServerStatus: String?
     var packetURLString: String = FlyWorldSceneController.defaultPacketURLString
 
     init() {
@@ -131,6 +141,7 @@ final class FlyWorldSceneController {
 
     func startPoseUpdates(bundle: Bundle = .main) {
         guard poseTask == nil else { return }
+        startLocalPoseServerIfNeeded()
         poseTask = Task { [weak self] in
             await self?.runPoseLoop(bundle: bundle)
         }
@@ -141,12 +152,93 @@ final class FlyWorldSceneController {
         poseTask = nil
     }
 
+    func stopLocalPoseServer() {
+        #if os(macOS)
+        localPoseServerPipe?.fileHandleForReading.readabilityHandler = nil
+        if let process = localPoseServerProcess, process.isRunning {
+            process.terminate()
+        }
+        localPoseServerProcess = nil
+        localPoseServerPipe = nil
+        #endif
+    }
+
+    func startLocalPoseServerIfNeeded() {
+        #if os(macOS)
+        guard localPoseServerProcess == nil else { return }
+        guard isDefaultLocalPoseURL(packetURLString) else { return }
+        guard !isRunningUnderXCTest() else { return }
+        guard let simulationDirectory = resolveSimulationDirectory() else {
+            updatePoseServerStatus("Simulation directory not found. Set LEARNING_TO_FLY_ROOT to the LearningToFly checkout.")
+            return
+        }
+
+        let scriptURL = simulationDirectory.appendingPathComponent("run_live_multi_fly.py")
+        let outputURL = FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)
+            .first?
+            .appendingPathComponent("vision_pro_pose_packet.json")
+
+        let launcher = localPythonLauncher(for: simulationDirectory.deletingLastPathComponent())
+        let process = Process()
+        process.executableURL = launcher.executableURL
+        var arguments = launcher.arguments
+        arguments.append(contentsOf: [
+            scriptURL.path,
+            "--output",
+            outputURL?.path ?? (NSHomeDirectory() + "/Documents/vision_pro_pose_packet.json"),
+            "--http-host",
+            "0.0.0.0",
+            "--http-port",
+            "8765"
+        ])
+        process.arguments = arguments
+        process.currentDirectoryURL = simulationDirectory
+        var environment = ProcessInfo.processInfo.environment
+        environment["PYTHONUNBUFFERED"] = "1"
+        process.environment = environment
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+        pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
+            let data = handle.availableData
+            guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
+            let line = text
+                .split(whereSeparator: \.isNewline)
+                .last
+                .map(String.init) ?? text.trimmingCharacters(in: .whitespacesAndNewlines)
+            Task { @MainActor in
+                self?.updatePoseServerStatus(line.isEmpty ? "Starting local pose server..." : line)
+            }
+        }
+        process.terminationHandler = { [weak self] process in
+            Task { @MainActor in
+                self?.updatePoseServerStatus("Local pose server exited with status \(process.terminationStatus).")
+                self?.localPoseServerProcess = nil
+                self?.localPoseServerPipe?.fileHandleForReading.readabilityHandler = nil
+                self?.localPoseServerPipe = nil
+            }
+        }
+
+        do {
+            updatePoseServerStatus("Launching local pose server with \(launcher.executableURL.path) ...")
+            try process.run()
+            localPoseServerProcess = process
+            localPoseServerPipe = pipe
+            updatePoseServerStatus("Starting local pose server on http://127.0.0.1:8765/pose...")
+        } catch {
+            updatePoseServerStatus("Could not start local pose server: \(error.localizedDescription)")
+        }
+        #endif
+    }
+
     func setSceneScale(_ scale: Float) {
         root.scale = SIMD3<Float>(repeating: scale)
     }
 
     private func runPoseLoop(bundle: Bundle) async {
-        var frameIndex = 0
+        var frameIndex = 1
         while !Task.isCancelled {
             if frameIndex.isMultiple(of: 8) {
                 var refreshed: (FlyWorldPosePacket, FlyWorldPosePacketSource)?
@@ -249,9 +341,15 @@ final class FlyWorldSceneController {
                 agentID: agent.id,
                 neighborsMm: neighbors
             )
+            let displayMotion = deathAdjustedMotion(
+                packet: agentPacket,
+                motion: motion,
+                agentID: agent.id,
+                time: time
+            )
             guard let build = rig(for: agent, index: index) else { continue }
-            applyRootTransform(motion: motion, rig: build)
-            applyBehaviorState(packet: agentPacket, motion: motion, rig: build)
+            applyRootTransform(motion: displayMotion, rig: build)
+            applyBehaviorState(packet: agentPacket, motion: displayMotion, rig: build)
             renderedAgents.append(
                 FlyWorldRenderedAgentState(
                     id: agent.id,
@@ -259,13 +357,14 @@ final class FlyWorldSceneController {
                     generation: agent.generation,
                     score: agent.score,
                     genomeSummary: agent.genomeSummary,
-                    positionMm: motion.rootPositionMm,
-                    scenePosition: scenePosition(from: motion.rootPositionMm),
-                    behavior: motion.behavior
+                    positionMm: displayMotion.rootPositionMm,
+                    scenePosition: scenePosition(from: displayMotion.rootPositionMm),
+                    behavior: displayMotion.behavior,
+                    isDead: agentPacket.isDead
                 )
             )
             if index == 0 {
-                primaryBehavior = motion.behavior
+                primaryBehavior = displayMotion.behavior
             }
         }
 
@@ -300,6 +399,7 @@ final class FlyWorldSceneController {
             build.root.removeFromParent()
             extraRigs.removeValue(forKey: agentID)
             brainMotionControllers.removeValue(forKey: agentID)
+            deathAnimations.removeValue(forKey: agentID)
         }
 
         for agent in agents.dropFirst() where extraRigs[agent.id] == nil {
@@ -323,6 +423,69 @@ final class FlyWorldSceneController {
             controller.reset(using: packet.packet(for: agent), referenceTime: referenceTime)
             brainMotionControllers[agent.id] = controller
         }
+    }
+
+    private func deathAdjustedMotion(
+        packet: FlyWorldPosePacket,
+        motion: FlyWorldMotionFrame,
+        agentID: String,
+        time: TimeInterval
+    ) -> FlyWorldMotionFrame {
+        guard packet.isDead else {
+            deathAnimations.removeValue(forKey: agentID)
+            return motion
+        }
+
+        let animation = deathAnimations[agentID] ?? {
+            let seededSign: Float = deathFallSign(for: agentID)
+            let startedAt = packet.deathTime ?? time
+            let animation = FlyWorldDeathAnimation(
+                startedAt: startedAt,
+                initialPositionMm: motion.rootPositionMm,
+                initialQuaternion: motion.rootQuaternion,
+                fallSign: seededSign
+            )
+            deathAnimations[agentID] = animation
+            return animation
+        }()
+
+        let elapsed = max(Float(time - animation.startedAt), 0.0)
+        let normalizedElapsed = Swift.min(Swift.max(elapsed / 1.15, 0.0), 1.0)
+        let progress = smoothstep(normalizedElapsed)
+        let fallenPosition = SIMD3<Float>(
+            animation.initialPositionMm.x,
+            animation.initialPositionMm.y,
+            min(animation.initialPositionMm.z, 0.2)
+        )
+        let rootPosition = animation.initialPositionMm + (fallenPosition - animation.initialPositionMm) * progress
+        let fallRotation = simd_quatf(
+            angle: animation.fallSign * Float.pi * 0.52,
+            axis: SIMD3<Float>(1.0, 0.0, 0.0)
+        )
+        let fallenQuaternion = simd_normalize(fallRotation * animation.initialQuaternion)
+        let rootQuaternion = simd_slerp(animation.initialQuaternion, fallenQuaternion, progress)
+
+        return FlyWorldMotionFrame(
+            rootPositionMm: rootPosition,
+            rootQuaternion: rootQuaternion,
+            leftStrideDrive: 0.0,
+            rightStrideDrive: 0.0,
+            gaitPhase: motion.gaitPhase,
+            behavior: "dead",
+            feedDrive: 0.0,
+            escapeDrive: 0.0,
+            brainDrive: 0.0
+        )
+    }
+
+    private func deathFallSign(for agentID: String) -> Float {
+        var hasher = Hasher()
+        hasher.combine(agentID)
+        return (hasher.finalize() & 1) == 0 ? 1.0 : -1.0
+    }
+
+    private func smoothstep(_ value: Float) -> Float {
+        value * value * (3.0 - 2.0 * value)
     }
 
     private func applyRootTransform(motion: FlyWorldMotionFrame, rig: FlyWorldBuild) {
@@ -471,6 +634,8 @@ final class FlyWorldSceneController {
 
         let color: PlatformColor
         switch behavior {
+        case "dead":
+            color = FlyWorldEntityFactory.color(0.34, 0.35, 0.36)
         case "fly":
             color = FlyWorldEntityFactory.color(0.62, 0.30, 0.96)
         case "feed":
@@ -484,7 +649,8 @@ final class FlyWorldSceneController {
         }
 
         rig.brainHalo.model?.materials = [UnlitMaterial(color: color)]
-        rig.brainHalo.components.set(OpacityComponent(opacity: 0.08 + clamped * 0.10))
+        let opacity: Float = behavior == "dead" ? 0.035 : 0.08 + clamped * 0.10
+        rig.brainHalo.components.set(OpacityComponent(opacity: opacity))
     }
 
     private func updateEvolutionVisualization(
@@ -601,7 +767,8 @@ final class FlyWorldSceneController {
     private func inferredMatingPair(
         from renderedAgents: [FlyWorldRenderedAgentState]
     ) -> FlyWorldMatingPair? {
-        let ranked = renderedAgents.sorted { lhs, rhs in
+        let viableAgents = renderedAgents.filter { !$0.isDead }
+        let ranked = viableAgents.sorted { lhs, rhs in
             let lhsScore = lhs.score ?? -Float.greatestFiniteMagnitude
             let rhsScore = rhs.score ?? -Float.greatestFiniteMagnitude
             if lhsScore != rhsScore {
@@ -853,6 +1020,82 @@ final class FlyWorldSceneController {
         )
     }
 
+    #if os(macOS)
+    private func updatePoseServerStatus(_ status: String) {
+        poseServerStatus = status
+        NSLog("FlyWorld pose server: %@", status)
+    }
+
+    private func isRunningUnderXCTest() -> Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
+            Bundle.allBundles.contains { $0.bundlePath.hasSuffix(".xctest") } ||
+            NSClassFromString("XCTest.XCTestCase") != nil
+    }
+
+    private func isDefaultLocalPoseURL(_ value: String) -> Bool {
+        guard let url = URL(string: value.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            return false
+        }
+        let host = (url.host ?? "").lowercased()
+        return url.scheme == "http" &&
+            (host == "127.0.0.1" || host == "localhost" || host == "::1") &&
+            (url.port ?? 80) == 8765
+    }
+
+    private func resolveSimulationDirectory() -> URL? {
+        let fileManager = FileManager.default
+        let environment = ProcessInfo.processInfo.environment
+        var seeds: [URL] = []
+
+        if let configuredRoot = environment["LEARNING_TO_FLY_ROOT"], !configuredRoot.isEmpty {
+            seeds.append(URL(fileURLWithPath: configuredRoot, isDirectory: true))
+        }
+        seeds.append(URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirectory: true))
+        seeds.append(Bundle.main.bundleURL)
+        let homeLearningToFly = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+            .appendingPathComponent("dev", isDirectory: true)
+            .appendingPathComponent("advatar", isDirectory: true)
+            .appendingPathComponent("LearningToFly", isDirectory: true)
+        seeds.append(homeLearningToFly)
+
+        var checked = Set<String>()
+        for seed in seeds {
+            for candidateRoot in candidateRoots(from: seed) {
+                guard checked.insert(candidateRoot.path).inserted else { continue }
+                let simulationDirectory = candidateRoot.appendingPathComponent("simulation", isDirectory: true)
+                let scriptURL = simulationDirectory.appendingPathComponent("run_live_multi_fly.py")
+                if fileManager.isReadableFile(atPath: scriptURL.path) {
+                    return simulationDirectory
+                }
+            }
+        }
+        return nil
+    }
+
+    private func candidateRoots(from seed: URL) -> [URL] {
+        var result: [URL] = []
+        var current = seed.standardizedFileURL
+        for _ in 0..<14 {
+            result.append(current)
+            let parent = current.deletingLastPathComponent()
+            if parent.path == current.path {
+                break
+            }
+            current = parent
+        }
+        return result
+    }
+
+    private func localPythonLauncher(for repositoryRoot: URL) -> (executableURL: URL, arguments: [String]) {
+        let venvPython = repositoryRoot
+            .appendingPathComponent(".venv311/bin/python")
+        if FileManager.default.isExecutableFile(atPath: venvPython.path) {
+            return (venvPython, [])
+        }
+        return (URL(fileURLWithPath: "/usr/bin/env"), ["python3"])
+    }
+    #endif
+
     private func packetSignature(
         for packet: FlyWorldPosePacket,
         source: FlyWorldPosePacketSource
@@ -981,6 +1224,14 @@ private struct FlyWorldRenderedAgentState {
     let positionMm: SIMD3<Float>
     let scenePosition: SIMD3<Float>
     let behavior: String
+    let isDead: Bool
+}
+
+private struct FlyWorldDeathAnimation {
+    let startedAt: TimeInterval
+    let initialPositionMm: SIMD3<Float>
+    let initialQuaternion: simd_quatf
+    let fallSign: Float
 }
 
 private struct FlyWorldMatingPair {

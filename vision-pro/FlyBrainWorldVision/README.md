@@ -28,6 +28,11 @@ xcodebuild -project FlyBrainWorldVision.xcodeproj \
 
 If no live packet exists in the app Documents directory, the viewer falls back to a shared descending-controller path that drives locomotion and feeding from the packet's brain-state channels.
 
+The macOS viewer starts `simulation/run_live_multi_fly.py` automatically when
+its pose URL is the default `http://127.0.0.1:8765/pose`. The visionOS app,
+on device or simulator, cannot launch that Mac Python process, so start the
+Mac-hosted pose server and paste its printed LAN URL into **LAN Pose Stream**.
+
 To drive motion from the simulator bridge instead, keep updating one of these files:
 
 - `vision_pro_pose_packet.json`
@@ -36,6 +41,9 @@ To drive motion from the simulator bridge instead, keep updating one of these fi
 The packet schema lives in `shared/FlyWorldSharedResources/vision_pro_pose_schema.json`.
 It now supports either the original single-fly fields or a multi-fly `agents`
 array for injected generation comparisons.
+Live/replay packets can also mark an agent with `life_state: "dead"` plus
+`death_reason` / `death_time`; the viewer keeps that final simulation pose and
+animates the fly falling down instead of hiding or respawning it.
 
 ## Bundled fallback flies
 

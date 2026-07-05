@@ -325,6 +325,29 @@ final class FlyWorldBrainDrivenMotionTests: XCTestCase {
         XCTAssertEqual(advanced.rootPositionMm.y, initial.rootPositionMm.y, accuracy: 0.0001)
     }
 
+    func testDeadBrainDrivenMotionDoesNotDrift() {
+        var controller = FlyWorldBrainDrivenMotionController()
+        let packet = makePacket(
+            rootPosition: [0.0, 0.0, 0.2],
+            brainState: [
+                "oDN1": 0.95,
+                "DNa01": 0.30
+            ],
+            behavior: "dead"
+        )
+
+        controller.reset(using: packet, referenceTime: 0.0)
+        let initial = controller.synthesize(packet: packet, time: 0.0)
+        let advanced = controller.synthesize(packet: packet, time: 1.0)
+
+        XCTAssertEqual(initial.behavior, "dead")
+        XCTAssertEqual(advanced.behavior, "dead")
+        XCTAssertEqual(advanced.rootPositionMm.x, initial.rootPositionMm.x, accuracy: 0.0001)
+        XCTAssertEqual(advanced.rootPositionMm.y, initial.rootPositionMm.y, accuracy: 0.0001)
+        XCTAssertEqual(advanced.leftStrideDrive, 0.0, accuracy: 0.0001)
+        XCTAssertEqual(advanced.rightStrideDrive, 0.0, accuracy: 0.0001)
+    }
+
     func testFeedControllerSlowsAsFlyReachesDish() {
         let worldObjects = [
             FlyWorldPosePacket.WorldObject(
