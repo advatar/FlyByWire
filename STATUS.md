@@ -37,3 +37,4 @@
 - [x] Make FlyBrainWorldVision compile and run on macOS while preserving visionOS volume and immersive modes.
 - [x] Verify FlyBrainWorldVision macOS and visionOS builds after the recommended Xcode settings update.
 - [x] Commit and push the FlyBrainWorldVision macOS compatibility fix.
+- [x] Mark this standalone repository as archived and point active development to `advatar/LearningToFly`.

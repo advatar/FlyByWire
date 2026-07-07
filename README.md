@@ -1,3 +1,14 @@
+# Archived Standalone Repository
+
+This repository is now a read-only recovery/archive source. Active development
+has moved to the `FlyByWire` tree inside the canonical monorepo:
+
+<https://github.com/advatar/LearningToFly/tree/main/FlyByWire>
+
+The last standalone line is preserved by tags, including
+`flybywire-pre-flatten-20260705-211409` and the final archive notice tag.
+Do not open new feature work here; use `advatar/LearningToFly` instead.
+
 # Emulation of the *Drosophila Fly* Brain
 
 Whole-brain leaky integrate-and-fire model of the adult fruit fly, built from the
